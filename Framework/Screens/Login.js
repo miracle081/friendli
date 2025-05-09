@@ -11,7 +11,7 @@ import {
     ScrollView,
     Image
 } from 'react-native';
-import Theme from '../Components/Theme'; // Adjust the import path as necessary
+import { Theme } from '../Components/Theme'; // Adjust the import path as necessary
 
 // Button component
 export function AppButton({ children, onPress, variant = "primary", style }) {
