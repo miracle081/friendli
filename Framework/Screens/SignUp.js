@@ -11,7 +11,54 @@ import {
     ScrollView,
     Image
 } from 'react-native';
-import Theme from '../Components/Theme'; // Adjust the import path as necessary
+
+// Theme configuration
+export const Theme = {
+    colors: {
+        primary: "#22C55E",
+        blueLight: "#CCE0F0",
+        blueMedium: "#2F80ED",
+        blueDark: "#53b8ee",
+        green: "#22C55E",
+        greenDark: "#0E4D2B",
+        greenMedium: "#50C878",
+        greenLight: "#B7E4C7",
+        yellow: "#ffb702",
+        mediumGreen: "#88FCB4",
+        lightGreen: "#E9F9EF",
+        red: "#EF4444",
+        redLight: "#ffe3e3",
+        gray: "#808080",
+        light: {
+            layer: "#f8f8f8",
+            bg: "#ffffff",
+            bg2: "#f0f0f0",
+            text1: "#000000e2",
+            text2: "#00000099",
+            line: "rgba(0,0,0,0.1)",
+        },
+        dark: {
+            layer: "#202020",
+            bg: "#141414",
+            bg2: "#212121",
+            text1: "#ffffff",
+            text2: "#ffffff99",
+            line: "rgba(255,255,255,0.1)"
+        },
+    },
+    fonts: {
+        brand: "Pacifico_400Regular",
+        text100: "Montserrat_100Thin",
+        text200: "Montserrat_200ExtraLight",
+        text300: "Montserrat_300Light",
+        text400: "Montserrat_400Regular",
+        text500: "Montserrat_500Medium",
+        text600: "Montserrat_600SemiBold",
+        text700: "Montserrat_700Bold",
+        text800: "Montserrat_800ExtraBold",
+        text900: "Montserrat_900Black",
+    }
+};
 
 // Button component
 export function AppButton({ children, onPress, variant = "primary", style }) {
@@ -68,14 +115,19 @@ export function InputField({
     );
 }
 
-// Login Screen
-export function Login({ navigation }) {
+export function SignUp({ navigation }) {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [errors, setErrors] = useState({});
 
     const validateForm = () => {
         const newErrors = {};
+
+        if (!name) {
+            newErrors.name = "Name is required";
+        }
 
         if (!email) {
             newErrors.email = "Email is required";
@@ -89,14 +141,20 @@ export function Login({ navigation }) {
             newErrors.password = "Password must be at least 6 characters";
         }
 
+        if (!confirmPassword) {
+            newErrors.confirmPassword = "Please confirm your password";
+        } else if (password !== confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleLogin = () => {
+    const handleSignup = () => {
         if (validateForm()) {
-            // Handle login logic here
-            console.log("Login with:", { email, password });
+            // Handle signup logic here
+            console.log("Sign up with:", { name, email, password });
         }
     };
 
@@ -118,11 +176,20 @@ export function Login({ navigation }) {
                     </View>
 
                     <View style={styles.headerContainer}>
-                        <Text style={styles.heading}>Sign In</Text>
-                        <Text style={styles.subheading}>Welcome back!</Text>
+                        <Text style={styles.heading}>Create Account</Text>
+                        <Text style={styles.subheading}>Sign up to get started!</Text>
                     </View>
 
                     <View style={styles.formContainer}>
+                        <InputField
+                            label="Full Name"
+                            placeholder="Enter your full name"
+                            value={name}
+                            onChangeText={setName}
+                            autoCapitalize="words"
+                            error={errors.name}
+                        />
+
                         <InputField
                             label="Email"
                             placeholder="Enter your email"
@@ -135,25 +202,27 @@ export function Login({ navigation }) {
 
                         <InputField
                             label="Password"
-                            placeholder="Enter your password"
+                            placeholder="Create a password"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry={true}
                             error={errors.password}
                         />
 
-                        <TouchableOpacity
-                            style={styles.forgotPasswordContainer}
-                            onPress={() => console.log("Forgot password")}
-                        >
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                        </TouchableOpacity>
+                        <InputField
+                            label="Confirm Password"
+                            placeholder="Confirm your password"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry={true}
+                            error={errors.confirmPassword}
+                        />
 
                         <AppButton
-                            onPress={handleLogin}
+                            onPress={handleSignup}
                             style={styles.loginButton}
                         >
-                            Login
+                            Sign Up
                         </AppButton>
                     </View>
 
@@ -165,18 +234,18 @@ export function Login({ navigation }) {
 
                     <View style={styles.socialLoginContainer}>
                         <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign in with Google</Text>
+                            <Text style={styles.socialButtonText}>Sign up with Google</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign in with Apple</Text>
+                            <Text style={styles.socialButtonText}>Sign up with Apple</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation?.navigate("Signup")}>
-                            <Text style={styles.signupLink}>Sign Up</Text>
+                        <Text style={styles.signupText}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
+                            <Text style={styles.signupLink}>Sign In</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
