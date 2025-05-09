@@ -96,7 +96,8 @@ export function Login({ navigation }) {
     const handleLogin = () => {
         if (validateForm()) {
             // Handle login logic here
-            console.log("Login with:", { email, password });
+            // console.log("Login with:", { email, password });
+            navigation.navigate("HomeScreen");
         }
     };
 
@@ -175,7 +176,7 @@ export function Login({ navigation }) {
 
                     <View style={styles.signupContainer}>
                         <Text style={styles.signupText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation?.navigate("Signup")}>
+                        <TouchableOpacity onPress={() => navigation?.navigate("SignUp")}>
                             <Text style={styles.signupLink}>Sign Up</Text>
                         </TouchableOpacity>
                     </View>

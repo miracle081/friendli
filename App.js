@@ -1,7 +1,8 @@
-import { Login } from "./Framework/Screens/Login";
+import { StackNavigator } from "./Framework/Navigators/Stack";
+
 
 export default function App() {
   return (
-    <Login />
+    <StackNavigator />
   );
 }

@@ -41,16 +41,7 @@ export function AppButton({ children, onPress, variant = "primary", style }) {
 }
 
 // Input field component
-export function InputField({
-    label,
-    placeholder,
-    value,
-    onChangeText,
-    secureTextEntry = false,
-    keyboardType = "default",
-    autoCapitalize = "none",
-    error
-}) {
+export function InputField({ label, placeholder, value, onChangeText, secureTextEntry = false, keyboardType = "default", autoCapitalize = "none", error, }) {
     return (
         <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>{label}</Text>
@@ -138,7 +129,7 @@ export function SignUp({ navigation }) {
                         <InputField
                             label="Full Name"
                             placeholder="Enter your full name"
-                            value={name}
+                            value={"name"}
                             onChangeText={setName}
                             autoCapitalize="words"
                             error={errors.name}

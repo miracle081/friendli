@@ -14,6 +14,8 @@ export const Theme = {
         red: "#EF4444",
         redLight: "#ffe3e3",
         gray: "#808080",
+
+
         light: {
             layer: "#f8f8f8",
             bg: "#ffffff",
