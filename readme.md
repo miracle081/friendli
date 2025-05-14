@@ -1,1 +1,3 @@
 React Native is an open-source mobile application framework created by Facebook, Inc. It is used to develop applications for Android, Android TV, iOS, macOS, tvOS, Web, Windows and UWP by enabling developers to use React along with native platform capabilities.
+
+Core components are the basic building blocks of a React Native application. They include components like View, Text, Image, ScrollView, and StyleSheet. These components are used to create the user interface of the application and are essential for building any React Native app.
