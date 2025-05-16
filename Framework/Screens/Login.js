@@ -97,7 +97,7 @@ export function Login({ navigation }) {
         if (validateForm()) {
             // Handle login logic here
             // console.log("Login with:", { email, password });
-            navigation.navigate("HomeScreen");
+            navigation.navigate("HomeScreen", { email });
         }
     };
 

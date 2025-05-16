@@ -1,7 +1,7 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Theme } from './Theme';
 
-export function AppBotton({ disabled, textStyle, onPress, children, style, textColor, buttonColor, icon }) {
+export function AppButton({ disabled, textStyle, onPress, children, style, textColor, buttonColor, icon }) {
 
     const styles = StyleSheet.create({
         btn: {

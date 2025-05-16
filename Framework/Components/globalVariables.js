@@ -7,7 +7,9 @@ function AppProvider({ children }) {
     const [docID, setDocID] = useState("");
     const [userUID, setUserUID] = useState("Tt2odnbeFOgER9NFSklP2zStV2C3");
     const [preloader, setPreloader] = useState(false);
-    const [userInfo, setUserInfo] = useState({ image: null, firstname: "John", lastname: "Wick", email: "john@gmail.com" });
+    const [userInfo, setUserInfo] = useState({ image: "https://randomuser.me/api/portraits/men/16.jpg", firstname: "John", lastname: "Wick", email: "john@gmail.com" });
+    const [PostData, setPostData] = useState({});
+
 
     return (
         <AppContext.Provider value={{
@@ -16,6 +18,7 @@ function AppProvider({ children }) {
             userUID, setUserUID,
             userInfo, setUserInfo,
             preloader, setPreloader,
+            PostData, setPostData,
         }}>
             {children}
         </AppContext.Provider>
