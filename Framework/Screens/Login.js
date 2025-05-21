@@ -9,9 +9,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image
+    Image,
+    Alert
 } from 'react-native';
 import { Theme } from '../Components/Theme'; // Adjust the import path as necessary
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../Firebase/settigns';
+import { errorMessage } from '../Components/formatErrorMessage';
 
 // Button component
 export function AppButton({ children, onPress, variant = "primary", style }) {
@@ -95,9 +99,14 @@ export function Login({ navigation }) {
 
     const handleLogin = () => {
         if (validateForm()) {
-            // Handle login logic here
-            // console.log("Login with:", { email, password });
-            navigation.navigate("HomeScreen", { email });
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const userid = userCredential.user.uid;
+                    navigation.navigate("HomeScreen", { email });
+                })
+                .catch((error) => {
+                    Alert.alert("Login Failed", errorMessage(error.code));
+                });
         }
     };
 

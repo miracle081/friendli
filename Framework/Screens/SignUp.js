@@ -9,9 +9,14 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image
+    Image,
+    Alert
 } from 'react-native';
 import { Theme } from '../Components/Theme'; // Adjust the import path as necessary
+import { auth, db } from '../Firebase/settigns';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { errorMessage } from '../Components/formatErrorMessage';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 // Button component
@@ -61,7 +66,8 @@ export function InputField({ label, placeholder, value, onChangeText, secureText
 }
 
 export function SignUp({ navigation }) {
-    const [name, setName] = useState('');
+    const [firstname, setFirstname] = useState('');
+    const [lastname, setLastname] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -70,8 +76,11 @@ export function SignUp({ navigation }) {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!name) {
-            newErrors.name = "Name is required";
+        if (!firstname) {
+            newErrors.firstname = "Name is required";
+        }
+        if (!lastname) {
+            newErrors.newErrors = "Name is required";
         }
 
         if (!email) {
@@ -98,8 +107,31 @@ export function SignUp({ navigation }) {
 
     const handleSignup = () => {
         if (validateForm()) {
-            // Handle signup logic here
-            console.log("Sign up with:", { name, email, password });
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const userid = userCredential.user.uid;
+                    // addDoc() and setDoc() to add a new document to the Firestore
+                    // addDoc() will add a new document to the collection and generate a unique ID for it
+                    // setDoc() will create a document with a specified ID
+                    setDoc(doc(db, "users", userid), {
+                        firstname,
+                        lastname,
+                        email,
+                        image: null,
+                        bio: "",
+                        phone: "",
+                        location: null,
+                        createdAt: new Date().getTime(),
+                    }).then(() => {
+                        navigation.navigate("HomeScreen", { email });
+                    })
+                        .catch((error) => {
+                            Alert.alert("Error", errorMessage(error.code));
+                        })
+                })
+                .catch((error) => {
+                    Alert.alert("Login Failed", errorMessage(error.code));
+                });
         }
     };
 
@@ -127,12 +159,20 @@ export function SignUp({ navigation }) {
 
                     <View style={styles.formContainer}>
                         <InputField
-                            label="Full Name"
-                            placeholder="Enter your full name"
-                            value={"name"}
-                            onChangeText={setName}
+                            label="First Name"
+                            placeholder="Enter your first name"
+                            value={firstname}
+                            onChangeText={setFirstname}
                             autoCapitalize="words"
-                            error={errors.name}
+                            error={errors.firstname}
+                        />
+                        <InputField
+                            label="Last Name"
+                            placeholder="Enter your last name"
+                            value={lastname}
+                            onChangeText={setLastname}
+                            autoCapitalize="words"
+                            error={errors.lastname}
                         />
 
                         <InputField
