@@ -7,6 +7,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import * as Font from "expo-font";
 import { AppProvider } from "./Framework/Components/globalVariables";
+import { Preloader } from "./Framework/Components/Preloader";
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -48,6 +49,7 @@ export default function App() {
   return (
     <AppProvider>
       <StackNavigator />
+      <Preloader />
     </AppProvider>
 
   )

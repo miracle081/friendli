@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     Text,
     TextInput,
@@ -16,6 +16,7 @@ import { Theme } from '../Components/Theme'; // Adjust the import path as necess
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
+import { AppContext } from '../Components/globalVariables';
 
 // Button component
 export function AppButton({ children, onPress, variant = "primary", style }) {
@@ -74,6 +75,7 @@ export function InputField({
 
 // Login Screen
 export function Login({ navigation }) {
+    const { setPreloader, setUserUID } = useContext(AppContext);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
@@ -99,12 +101,17 @@ export function Login({ navigation }) {
 
     const handleLogin = () => {
         if (validateForm()) {
+            setPreloader(true)
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const userid = userCredential.user.uid;
-                    navigation.navigate("HomeScreen", { email });
+                    // console.log(userid);
+                    setUserUID(userid)
+                    setPreloader(false)
+                    navigation.replace("HomeScreen");
                 })
                 .catch((error) => {
+                    setPreloader(false)
                     Alert.alert("Login Failed", errorMessage(error.code));
                 });
         }
@@ -222,7 +229,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoText: {
-        fontFamily: Theme.fonts.brand,
+        fontFamily: Theme.fonts.text600,
         fontSize: 24,
         color: Theme.colors.greenDark,
     },

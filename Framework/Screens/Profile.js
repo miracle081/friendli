@@ -81,9 +81,8 @@ export function Profile() {
                             <FontAwesomeIcon icon={faCamera} size={14} color="white" />
                         </TouchableOpacity>
                     </View>
-
-                    <Text style={styles.profileName}>Andrew Tate</Text>
-                    <Text style={styles.profileBio}>Entrepreneur | Motivational Speaker | Four-time World Kickboxing Champion</Text>
+                    <Text style={styles.profileName}>{userInfo.firstname} {userInfo.lastname}</Text>
+                    <Text style={styles.profileBio}>{userInfo.bio}</Text>
 
                     {/* Profile Action Buttons */}
                     <View style={styles.profileActionContainer}>

@@ -5,7 +5,7 @@ const AppContext = createContext();
 function AppProvider({ children }) {
     const [doc, setDoc] = useState("");
     const [docID, setDocID] = useState("");
-    const [userUID, setUserUID] = useState("Tt2odnbeFOgER9NFSklP2zStV2C3");
+    const [userUID, setUserUID] = useState("");
     const [preloader, setPreloader] = useState(false);
     const [userInfo, setUserInfo] = useState({ image: "https://randomuser.me/api/portraits/men/16.jpg", firstname: "John", lastname: "Wick", email: "john@gmail.com" });
     const [PostData, setPostData] = useState({});

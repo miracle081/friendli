@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     Text,
     TextInput,
@@ -17,6 +17,7 @@ import { auth, db } from '../Firebase/settigns';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { doc, setDoc } from 'firebase/firestore';
+import { AppContext } from '../Components/globalVariables';
 
 
 // Button component
@@ -66,6 +67,7 @@ export function InputField({ label, placeholder, value, onChangeText, secureText
 }
 
 export function SignUp({ navigation }) {
+    const { setPreloader, setUserUID } = useContext(AppContext);
     const [firstname, setFirstname] = useState('');
     const [lastname, setLastname] = useState('');
     const [email, setEmail] = useState('');
@@ -107,6 +109,7 @@ export function SignUp({ navigation }) {
 
     const handleSignup = () => {
         if (validateForm()) {
+            setPreloader(true)
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const userid = userCredential.user.uid;
@@ -123,13 +126,17 @@ export function SignUp({ navigation }) {
                         location: null,
                         createdAt: new Date().getTime(),
                     }).then(() => {
+                        setUserUID(userid)
+                        setPreloader(false)
                         navigation.navigate("HomeScreen", { email });
                     })
                         .catch((error) => {
                             Alert.alert("Error", errorMessage(error.code));
+                            setPreloader(false)
                         })
                 })
                 .catch((error) => {
+                    setPreloader(false)
                     Alert.alert("Login Failed", errorMessage(error.code));
                 });
         }
@@ -266,7 +273,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoText: {
-        fontFamily: Theme.fonts.brand,
+        fontFamily: Theme.fonts.text600,
         fontSize: 24,
         color: Theme.colors.greenDark,
     },

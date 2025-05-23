@@ -1,6 +1,6 @@
 // HomeScreen.js
-import { useContext } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, SafeAreaView, StatusBar, FlatList, Dimensions } from 'react-native';
+import { useContext, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, SafeAreaView, StatusBar, FlatList, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Carousel from 'react-native-reanimated-carousel';
@@ -8,6 +8,9 @@ import { Profile } from './Profile';
 import { Theme } from '../Components/Theme';
 import { CreatePost } from './CreatePost';
 import { AppContext } from '../Components/globalVariables';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../Firebase/settigns';
+import { errorMessage } from '../Components/formatErrorMessage';
 
 
 
@@ -53,10 +56,35 @@ const postsData = [
 ];
 
 const Home = ({ navigation }) => {
+    const { userUID, userInfo, setPreloader, setUserInfo } = useContext(AppContext)
     const { width, height } = Dimensions.get("window");
-    const { userUID, userInfo } = useContext(AppContext)
 
 
+
+    useEffect(() => {
+        console.log(userInfo.image);
+
+        // function getuser() {
+        //     setPreloader(true)
+        //     getDoc(doc(db, "users", userUID))
+        //         .then((shapshot) => {
+        //             setUserInfo(shapshot.data());
+        //             setPreloader(false)
+        //         })
+        //         .catch((error) => {
+        //             setPreloader(false)
+        //             Alert.alert("Login Failed", errorMessage(error.code));
+        //         });
+        // }
+        function getuser() {
+            setPreloader(true)
+            onSnapshot(doc(db, "users", userUID), (shapshot) => {
+                setPreloader(false)
+                setUserInfo(shapshot.data());
+            })
+        }
+        getuser();
+    }, [])
 
     const renderStory = (item, index) => (
         <View key={index} style={styles.storyItem}>
@@ -103,7 +131,6 @@ const Home = ({ navigation }) => {
         "https://images.pexels.com/photos/3760072/pexels-photo-3760072.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
         "https://images.pexels.com/photos/4495803/pexels-photo-4495803.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
     ];
-
 
 
     return (
