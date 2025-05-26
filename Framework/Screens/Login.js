@@ -130,7 +130,7 @@ export function Login({ navigation }) {
                     <View style={styles.logoContainer}>
                         <View style={styles.logoCircle}>
                             {/* Replace with your actual logo */}
-                            <Text style={styles.logoText}>YourApp</Text>
+                            <Text style={styles.logoText}>Friendli</Text>
                         </View>
                     </View>
 
@@ -148,6 +148,9 @@ export function Login({ navigation }) {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             error={errors.email}
+                            autoCompleteType="email"
+                            textContentType="emailAddress"
+                            returnKeyType="next"
                         />
 
                         <InputField

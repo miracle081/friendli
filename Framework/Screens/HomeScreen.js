@@ -1,5 +1,5 @@
 // HomeScreen.js
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, SafeAreaView, StatusBar, FlatList, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,9 +8,10 @@ import { Profile } from './Profile';
 import { Theme } from '../Components/Theme';
 import { CreatePost } from './CreatePost';
 import { AppContext } from '../Components/globalVariables';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
+import { ToastApp } from '../Components/Toast';
 
 
 
@@ -50,7 +51,7 @@ const postsData = [
         likes: 389,
         comments: 98,
         shares: 40,
-        profilePic: 'https://randomuser.me/api/portraits/men/17.jpg',
+        profilePic: 'https://randomuser.me/api/portraits/men/20.jpg',
         postImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyDywZygHNZKNoXZNF_26ainkkq6bjD2GU5Q&s'
     }
 ];
@@ -58,11 +59,11 @@ const postsData = [
 const Home = ({ navigation }) => {
     const { userUID, userInfo, setPreloader, setUserInfo } = useContext(AppContext)
     const { width, height } = Dimensions.get("window");
+    const [posts, setPosts] = useState([]);
 
 
 
     useEffect(() => {
-        console.log(userInfo.image);
 
         // function getuser() {
         //     setPreloader(true)
@@ -84,6 +85,24 @@ const Home = ({ navigation }) => {
             })
         }
         getuser();
+
+        function fetchPosts() {
+            setPreloader(true);
+            onSnapshot(collection(db, "posts"), (snapshot) => {
+                const allposts = [];
+                snapshot.forEach(item => {
+                    allposts.push({ ...item.data(), docID: item.id });
+                });
+                setPreloader(false);
+                setPosts(allposts);
+            }, (error) => {
+                setPreloader(false);
+                console.error("Error fetching posts: ", error);
+                Alert.alert("Error", errorMessage(error.code));
+            });
+        }
+
+        fetchPosts()
     }, [])
 
     const renderStory = (item, index) => (
@@ -93,38 +112,64 @@ const Home = ({ navigation }) => {
         </View>
     );
 
-    const renderPost = ({ item }) => (
-        <View style={styles.postContainer}>
-            <View style={styles.postHeader}>
-                <Image source={{ uri: item.profilePic }} style={styles.profilePic} />
-                <View style={{ marginLeft: 10 }}>
-                    <Text style={styles.profileName}>{item.name} <Text style={styles.following}>• Following</Text></Text>
-                    <Text style={styles.profileDetails}>{item.details}</Text>
+    const renderPost = ({ item }) => {
+        const checkIfUserLiked = item.heart.includes(userUID);
+
+        function handleheart() {
+            let updatedHearts = [];
+            if (checkIfUserLiked) {
+                // Remove like
+                updatedHearts = item.heart.filter(uid => uid !== userUID);
+            } else {
+                // Add like
+                updatedHearts = [...item.heart, userUID];
+            }
+
+            updateDoc(doc(db, "posts", item.docID), {
+                heart: updatedHearts
+            })
+                .then(() => {
+                    // console.log("Post updated successfully");
+                })
+                .catch((error) => {
+                    console.error("Error updating post: ", error);
+                    ToastApp(errorMessage(error.code), "LONG");
+                })
+        }
+
+        return (
+            <View style={styles.postContainer}>
+                <View style={styles.postHeader}>
+                    <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
+                    <View style={{ marginLeft: 10 }}>
+                        <Text style={styles.profileName}>{item?.userInfo?.firstname} {item?.userInfo?.lastname}</Text>
+                        <Text style={styles.profileDetails}>{item?.userInfo?.bio}</Text>
+                    </View>
+                </View>
+
+                <Text style={styles.postText}>{item.caption}</Text>
+
+                {item.media[0] && <Image source={{ uri: item.media[0] }} style={styles.postImage} />}
+
+                <View style={styles.actionRow}>
+                    <TouchableOpacity onPress={handleheart} style={styles.actionButton}>
+                        <FontAwesome name={checkIfUserLiked ? "heart" : "heart-o"} size={20} color={checkIfUserLiked ? Theme.colors.red : "gray"} />
+                        <Text style={styles.actionText}>{item.heart.length}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionButton}>
+                        <FontAwesome name="comment-o" size={20} color="black" />
+                        <Text style={styles.actionText}>{item.comments}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.actionButton}>
+                        <FontAwesome name="share" size={20} color="black" />
+                        <Text style={styles.actionText}>{item.shares}</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
-
-            <Text style={styles.postText}>{item.text}</Text>
-
-            <Image source={{ uri: item.postImage }} style={styles.postImage} />
-
-            <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionButton}>
-                    <FontAwesome name="heart-o" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.likes}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <FontAwesome name="comment-o" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.comments}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <FontAwesome name="share" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.shares}</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+        )
+    };
 
     const carouselLinks = [
         "https://images.pexels.com/photos/534228/pexels-photo-534228.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
@@ -170,7 +215,7 @@ const Home = ({ navigation }) => {
                             {storiesData.map(renderStory)}
                         </ScrollView>
                     }
-                    data={postsData}
+                    data={posts}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderPost}
                     contentContainerStyle={{ paddingBottom: 80 }}
@@ -249,9 +294,6 @@ const styles = StyleSheet.create({
     },
     profileName: {
         fontWeight: 'bold'
-    },
-    following: {
-        color: 'blue'
     },
     profileDetails: {
         fontSize: 12,

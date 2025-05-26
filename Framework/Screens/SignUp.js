@@ -155,7 +155,7 @@ export function SignUp({ navigation }) {
                     <View style={styles.logoContainer}>
                         <View style={styles.logoCircle}>
                             {/* Replace with your actual logo */}
-                            <Text style={styles.logoText}>YourApp</Text>
+                            <Text style={styles.logoText}>Friendli</Text>
                         </View>
                     </View>
 

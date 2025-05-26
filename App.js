@@ -8,6 +8,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Font from "expo-font";
 import { AppProvider } from "./Framework/Components/globalVariables";
 import { Preloader } from "./Framework/Components/Preloader";
+import { RootSiblingParent } from "react-native-root-siblings";
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -47,10 +48,12 @@ export default function App() {
 
 
   return (
-    <AppProvider>
-      <StackNavigator />
-      <Preloader />
-    </AppProvider>
+    <RootSiblingParent>
+      <AppProvider>
+        <StackNavigator />
+        <Preloader />
+      </AppProvider>
+    </RootSiblingParent>
 
   )
 }

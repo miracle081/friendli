@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {
     StyleSheet,
     Text,
@@ -8,7 +8,8 @@ import {
     TextInput,
     SafeAreaView,
     Platform,
-    StatusBar
+    StatusBar,
+    Alert
 } from "react-native";
 import { AppContext } from "../Components/globalVariables";
 import { Theme } from "../Components/Theme";
@@ -22,9 +23,47 @@ import {
     faTimes,
     faSmile
 } from "@fortawesome/free-solid-svg-icons";
+import { addDoc, collection, } from "firebase/firestore";
+import { db } from "../Firebase/settigns";
+import { errorMessage } from "../Components/formatErrorMessage";
+import { ToastApp } from "../Components/Toast";
 
-export function CreatePost() {
-    const { userInfo } = useContext(AppContext);
+export function CreatePost({ navigation }) {
+    const { userUID, userInfo, setPreloader } = useContext(AppContext);
+    const [caption, setCaption] = useState("");
+    const [media, setMedia] = useState(["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTatLiJAG6jse2XTu96VcidI8X5OYIvWzcenw&s"]);
+
+    function handlePost() {
+        setPreloader(true);
+        addDoc(collection(db, "posts"), {
+            caption: caption,
+            media: media,
+            userUID: userUID,
+            userInfo: {
+                firstname: userInfo.firstname,
+                lastname: userInfo.lastname,
+                image: userInfo.image,
+                bio: userInfo.bio,
+            },
+            timestamp: new Date().getTime(),
+            heart: [],
+            comments: [],
+            shares: [],
+            privacy: "public",
+        })
+            .then(() => {
+                setPreloader(false);
+                setCaption("");
+                setMedia([]);
+                ToastApp("Post created successfully", "LONG");
+                navigation.navigate("HomeScreen", { screen: "Home" });
+            }).catch((error) => {
+                setPreloader(false);
+                console.log("Error adding document: ", error);
+                Alert.alert("Error adding document", errorMessage(error.code));
+            });
+    }
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -33,7 +72,7 @@ export function CreatePost() {
             <View style={styles.userInfoContainer}>
                 <Image source={{ uri: userInfo?.image }} style={styles.userAvatar} />
                 <View style={styles.userNamePrivacyContainer}>
-                    <Text style={styles.userName}>Andrew Tate</Text>
+                    <Text style={styles.userName}>{userInfo.firstname} {userInfo.lastname}</Text>
                     <TouchableOpacity style={styles.privacySelector}>
                         <FontAwesomeIcon icon={faGlobe} size={14} color={Theme.colors.gray} />
                         <Text style={styles.privacyText}>Public</Text>
@@ -49,6 +88,8 @@ export function CreatePost() {
                     placeholder="What's on your mind?"
                     placeholderTextColor={Theme.colors.gray}
                     multiline={true}
+                    value={caption}
+                    onChangeText={inp => setCaption(inp)}
                 />
             </View>
 
@@ -80,7 +121,7 @@ export function CreatePost() {
             </View>
 
             {/* Post Button - Bottom */}
-            <TouchableOpacity style={styles.postButtonBottom}>
+            <TouchableOpacity onPress={handlePost} style={styles.postButtonBottom}>
                 <Text style={styles.postButtonBottomText}>Post</Text>
             </TouchableOpacity>
         </SafeAreaView>
