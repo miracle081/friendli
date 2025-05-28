@@ -57,14 +57,12 @@ const postsData = [
 ];
 
 const Home = ({ navigation }) => {
-    const { userUID, userInfo, setPreloader, setUserInfo } = useContext(AppContext)
+    const { userUID, userInfo, setPreloader, setUserInfo, posts, setPosts } = useContext(AppContext)
     const { width, height } = Dimensions.get("window");
-    const [posts, setPosts] = useState([]);
 
 
 
     useEffect(() => {
-
         // function getuser() {
         //     setPreloader(true)
         //     getDoc(doc(db, "users", userUID))
@@ -244,14 +242,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 10,
         paddingVertical: 8,
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: 10
     },
     searchBar: {
         backgroundColor: '#f0f0f0',
         borderRadius: 20,
         paddingHorizontal: 15,
         flex: 1,
-        marginRight: 10,
         height: 40,
     },
     storiesContainer: {

@@ -26,60 +26,91 @@ import {
     faBriefcase,
     faGraduationCap,
     faHeart,
-    faHome
+    faHome,
+    faWallet
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../Firebase/settigns";
+import { ToastApp } from "../Components/Toast";
+import { errorMessage } from "../Components/formatErrorMessage";
 
-export function Profile() {
-    const { userInfo } = useContext(AppContext);
+const RenderPost = ({ item, userUID }) => {
+    const checkIfUserLiked = item.heart.includes(userUID);
 
-    // This would be replaced with actual data from your API or context
-    const posts = [
-        {
-            id: '1',
-            content: 'Success is not final, failure is not fatal: it is the courage to continue that counts.',
-            time: '2 hours ago',
-            likes: 234,
-            comments: 45,
-            shares: 12
-        },
-        {
-            id: '2',
-            content: 'Just finished a great workout session! Pushing limits every day. #motivation #fitness',
-            time: '2 days ago',
-            likes: 578,
-            comments: 89,
-            shares: 30
+    function handleheart() {
+        let updatedHearts = [];
+        if (checkIfUserLiked) {
+            // Remove like
+            updatedHearts = item.heart.filter(uid => uid !== userUID);
+        } else {
+            // Add like
+            updatedHearts = [...item.heart, userUID];
         }
-    ];
+
+        updateDoc(doc(db, "posts", item.docID), {
+            heart: updatedHearts
+        })
+            .then(() => {
+                // console.log("Post updated successfully");
+            })
+            .catch((error) => {
+                console.error("Error updating post: ", error);
+                ToastApp(errorMessage(error.code), "LONG");
+            })
+    }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity>
-                        <FontAwesomeIcon icon={faEllipsisH} size={20} color={Theme.colors.light.text1} />
-                    </TouchableOpacity>
+        <View style={styles.postContainer}>
+            <View style={styles.postHeader}>
+                <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
+                <View style={{ marginLeft: 10 }}>
+                    <Text style={styles.profileName}>{item?.userInfo?.firstname} {item?.userInfo?.lastname}</Text>
+                    <Text style={styles.profileDetails}>{item?.userInfo?.bio}</Text>
                 </View>
+            </View>
+
+            <Text style={styles.postText}>{item.caption}</Text>
+
+            {item.media[0] && <Image source={{ uri: item.media[0] }} style={styles.postImage} />}
+
+            <View style={styles.actionRow}>
+                <TouchableOpacity onPress={handleheart} style={styles.actionButton2}>
+                    <FontAwesome name={checkIfUserLiked ? "heart" : "heart-o"} size={20} color={checkIfUserLiked ? Theme.colors.red : "gray"} />
+                    <Text style={styles.actionText2}>{item.heart.length}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton2}>
+                    <FontAwesome name="comment-o" size={20} color="black" />
+                    <Text style={styles.actionText2}>{item.comments}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton2}>
+                    <FontAwesome name="share" size={20} color="black" />
+                    <Text style={styles.actionText2}>{item.shares}</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    )
+};
+
+export function Profile({ navigation }) {
+    const { userInfo, posts, userUID } = useContext(AppContext);
+    const userPosts = posts.filter(item => item.userUID === userUID)
+
+    return (
+        <View style={styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false}>
 
                 {/* Cover Photo Section */}
                 <View style={styles.coverPhotoContainer}>
-                    <Image
-                        source={{ uri: 'https://placehold.co/600x200/22C55E/FFFFFF/png' }}
-                        style={styles.coverPhoto}
-                    />
-                    <TouchableOpacity style={styles.editCoverButton}>
-                        <FontAwesomeIcon icon={faCamera} size={16} color="white" />
-                    </TouchableOpacity>
+                    <View style={{ height: 190, backgroundColor: Theme.colors.primary }}></View>
                 </View>
 
                 {/* Profile Info Section */}
                 <View style={styles.profileInfoContainer}>
                     <View style={styles.profileImageContainer}>
                         <Image source={{ uri: userInfo?.image || 'https://placehold.co/120/22C55E/FFFFFF/png' }} style={styles.profileImage} />
-                        <TouchableOpacity style={styles.editProfileImageButton}>
-                            <FontAwesomeIcon icon={faCamera} size={14} color="white" />
-                        </TouchableOpacity>
                     </View>
                     <Text style={styles.profileName}>{userInfo.firstname} {userInfo.lastname}</Text>
                     <Text style={styles.profileBio}>{userInfo.bio}</Text>
@@ -87,16 +118,13 @@ export function Profile() {
                     {/* Profile Action Buttons */}
                     <View style={styles.profileActionContainer}>
                         <TouchableOpacity style={[styles.actionButton, { backgroundColor: Theme.colors.primary }]}>
-                            <Text style={styles.actionButtonText}>+ Add to Story</Text>
+                            <FontAwesomeIcon icon={faWallet} size={16} color={"white"} />
+                            <Text style={styles.actionButtonText}>Wallet</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: Theme.colors.light.bg2 }]}>
+                        <TouchableOpacity onPress={() => navigation.navigate("EditProfile")} style={[styles.actionButton, { backgroundColor: Theme.colors.light.bg2 }]}>
                             <FontAwesomeIcon icon={faPencilAlt} size={16} color={Theme.colors.light.text1} />
                             <Text style={[styles.actionButtonText, { color: Theme.colors.light.text1 }]}>Edit Profile</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.moreOptionsButton}>
-                            <FontAwesomeIcon icon={faEllipsisH} size={16} color={Theme.colors.light.text1} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -104,56 +132,6 @@ export function Profile() {
                 {/* Profile Stats Divider */}
                 <View style={styles.divider} />
 
-                {/* About Section */}
-                <View style={styles.aboutSection}>
-                    <View style={styles.aboutItem}>
-                        <FontAwesomeIcon icon={faBriefcase} size={16} color={Theme.colors.gray} />
-                        <Text style={styles.aboutText}>Entrepreneur at Top G Enterprises</Text>
-                    </View>
-
-                    <View style={styles.aboutItem}>
-                        <FontAwesomeIcon icon={faGraduationCap} size={16} color={Theme.colors.gray} />
-                        <Text style={styles.aboutText}>Studied at University of Life</Text>
-                    </View>
-
-                    <View style={styles.aboutItem}>
-                        <FontAwesomeIcon icon={faHome} size={16} color={Theme.colors.gray} />
-                        <Text style={styles.aboutText}>Lives in Dubai, United Arab Emirates</Text>
-                    </View>
-
-                    <View style={styles.aboutItem}>
-                        <FontAwesomeIcon icon={faHeart} size={16} color={Theme.colors.gray} />
-                        <Text style={styles.aboutText}>Single</Text>
-                    </View>
-
-                    <TouchableOpacity style={styles.editDetailsButton}>
-                        <Text style={styles.editDetailsText}>Edit Details</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Friends Section */}
-                <View style={styles.sectionContainer}>
-                    <View style={styles.sectionTitleContainer}>
-                        <Text style={styles.sectionTitle}>Friends</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.seeAllText}>See All</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.friendsCount}>1.2M friends</Text>
-
-                    <View style={styles.friendsGrid}>
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <View key={i} style={styles.friendItem}>
-                                <Image
-                                    source={{ uri: `https://placehold.co/100/808080/FFFFFF/png?text=Friend+${i}` }}
-                                    style={styles.friendImage}
-                                />
-                                <Text style={styles.friendName}>Friend {i}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
 
                 {/* Posts Section */}
                 <View style={styles.sectionContainer}>
@@ -180,49 +158,11 @@ export function Profile() {
                 </View>
 
                 {/* Posts List */}
-                {posts.map(post => (
-                    <View key={post.id} style={styles.postContainer}>
-                        <View style={styles.postHeader}>
-                            <Image source={{ uri: userInfo?.image || 'https://placehold.co/40/22C55E/FFFFFF/png' }} style={styles.postUserImage} />
-                            <View style={styles.postHeaderInfo}>
-                                <Text style={styles.postUserName}>Andrew Tate</Text>
-                                <Text style={styles.postTime}>{post.time}</Text>
-                            </View>
-                            <TouchableOpacity style={styles.postMoreButton}>
-                                <FontAwesomeIcon icon={faEllipsisH} size={18} color={Theme.colors.gray} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={styles.postContent}>{post.content}</Text>
-
-                        <View style={styles.postStats}>
-                            <Text style={styles.postStatText}>{post.likes} Likes</Text>
-                            <Text style={styles.postStatText}>{post.comments} Comments</Text>
-                            <Text style={styles.postStatText}>{post.shares} Shares</Text>
-                        </View>
-
-                        <View style={styles.divider} />
-
-                        <View style={styles.postActions}>
-                            <TouchableOpacity style={styles.postAction}>
-                                <FontAwesomeIcon icon={faThumbsUp} size={18} color={Theme.colors.gray} />
-                                <Text style={styles.postActionText}>Like</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.postAction}>
-                                <FontAwesomeIcon icon={faCommentAlt} size={18} color={Theme.colors.gray} />
-                                <Text style={styles.postActionText}>Comment</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.postAction}>
-                                <FontAwesomeIcon icon={faShareSquare} size={18} color={Theme.colors.gray} />
-                                <Text style={styles.postActionText}>Share</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                {userPosts.map(post => (
+                    <RenderPost item={post} userUID={userUID} />
                 ))}
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -336,30 +276,6 @@ const styles = StyleSheet.create({
         backgroundColor: Theme.colors.light.line,
         marginVertical: 12,
     },
-    aboutSection: {
-        backgroundColor: Theme.colors.light.bg,
-        padding: 16,
-        marginVertical: 8,
-    },
-    aboutItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 8,
-    },
-    aboutText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 14,
-        color: Theme.colors.light.text1,
-        marginLeft: 12,
-    },
-    editDetailsButton: {
-        marginTop: 12,
-    },
-    editDetailsText: {
-        fontFamily: Theme.fonts.text600,
-        fontSize: 14,
-        color: Theme.colors.blueMedium,
-    },
     sectionContainer: {
         backgroundColor: Theme.colors.light.bg,
         padding: 16,
@@ -379,33 +295,6 @@ const styles = StyleSheet.create({
         fontFamily: Theme.fonts.text600,
         fontSize: 14,
         color: Theme.colors.blueMedium,
-    },
-    friendsCount: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 14,
-        color: Theme.colors.light.text2,
-        marginTop: 4,
-    },
-    friendsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginTop: 12,
-    },
-    friendItem: {
-        width: '31%',
-        marginBottom: 12,
-    },
-    friendImage: {
-        width: '100%',
-        aspectRatio: 1,
-        borderRadius: 8,
-    },
-    friendName: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.light.text1,
-        marginTop: 4,
     },
     postCreateContainer: {
         flexDirection: 'row',
@@ -510,4 +399,48 @@ const styles = StyleSheet.create({
         color: Theme.colors.light.text2,
         marginLeft: 8,
     },
+    postContainer: {
+        marginHorizontal: 10,
+        marginVertical: 6,
+        padding: 10,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10
+    },
+    postHeader: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    profilePic: {
+        width: 50,
+        height: 50,
+        borderRadius: 25
+    },
+    profileName: {
+        fontWeight: 'bold'
+    },
+    profileDetails: {
+        fontSize: 12,
+        color: '#555'
+    },
+    postText: {
+        marginVertical: 8,
+        fontSize: 14
+    },
+    postImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 10
+    },
+    actionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 8
+    },
+    actionButton2: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    actionText2: {
+        marginLeft: 5
+    }
 });

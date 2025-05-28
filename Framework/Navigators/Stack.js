@@ -4,6 +4,8 @@ import { HomeScreen } from "../Screens/HomeScreen";
 import { SignUp } from "../Screens/SignUp";
 import { Login } from "../Screens/Login";
 import { CreatePost } from "../Screens/CreatePost";
+import { ForgottenPassword } from "../Screens/ForgottenPassword";
+import { EditProfile } from "../Screens/EditProfile";
 
 
 const Stack = createNativeStackNavigator();
@@ -15,7 +17,9 @@ export function StackNavigator() {
                 <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
                 <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
                 <Stack.Screen name="SignUp" component={SignUp} />
+                <Stack.Screen name="ForgottenPassword" component={ForgottenPassword} />
                 <Stack.Screen name="CreatePost" component={CreatePost} />
+                <Stack.Screen name="EditProfile" component={EditProfile} />
             </Stack.Navigator>
         </NavigationContainer>
     )

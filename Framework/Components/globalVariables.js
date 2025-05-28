@@ -5,10 +5,11 @@ const AppContext = createContext();
 function AppProvider({ children }) {
     const [doc, setDoc] = useState("");
     const [docID, setDocID] = useState("");
-    const [userUID, setUserUID] = useState("ADGHO1LxeScC0VWZ8hVhiAPY7tA3");
-    // const [userUID, setUserUID] = useState("ugp0XRcO3df9HAJeXla5xkhHV8G2");
+    // const [userUID, setUserUID] = useState("ADGHO1LxeScC0VWZ8hVhiAPY7tA3");
+    const [userUID, setUserUID] = useState("ugp0XRcO3df9HAJeXla5xkhHV8G2");
     const [preloader, setPreloader] = useState(false);
     const [userInfo, setUserInfo] = useState({ image: "https://randomuser.me/api/portraits/men/16.jpg", firstname: "John", lastname: "Wick", email: "john@gmail.com" });
+    const [posts, setPosts] = useState([]);
     const [PostData, setPostData] = useState({});
 
 
@@ -16,10 +17,11 @@ function AppProvider({ children }) {
         <AppContext.Provider value={{
             doc, setDoc,
             docID, setDocID,
+            posts, setPosts,
             userUID, setUserUID,
             userInfo, setUserInfo,
-            preloader, setPreloader,
             PostData, setPostData,
+            preloader, setPreloader,
         }}>
             {children}
         </AppContext.Provider>

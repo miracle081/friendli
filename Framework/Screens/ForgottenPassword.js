@@ -12,11 +12,12 @@ import {
     Image,
     Alert
 } from 'react-native';
-import { Theme } from '../Components/Theme'; // Adjust the import path as necessary
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { Theme } from '../Components/Theme';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { AppContext } from '../Components/globalVariables';
+import { ToastApp } from '../Components/Toast';
 
 // Button component
 export function AppButton({ children, onPress, variant = "primary", style }) {
@@ -74,10 +75,9 @@ export function InputField({
 }
 
 // Login Screen
-export function Login({ navigation }) {
+export function ForgottenPassword({ navigation }) {
     const { setPreloader, setUserUID } = useContext(AppContext);
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
 
     const validateForm = () => {
@@ -89,11 +89,6 @@ export function Login({ navigation }) {
             newErrors.email = "Email is invalid";
         }
 
-        if (!password) {
-            newErrors.password = "Password is required";
-        } else if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
-        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -102,13 +97,11 @@ export function Login({ navigation }) {
     const handleLogin = () => {
         if (validateForm()) {
             setPreloader(true)
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    const userid = userCredential.user.uid;
-                    // console.log(userid);
-                    setUserUID(userid)
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
                     setPreloader(false)
-                    navigation.replace("HomeScreen");
+                    ToastApp("A link has been sent to your email", "LONG")
+                    navigation.goBack();
                 })
                 .catch((error) => {
                     setPreloader(false)
@@ -127,16 +120,10 @@ export function Login({ navigation }) {
                     contentContainerStyle={styles.scrollContainer}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.logoContainer}>
-                        <View style={styles.logoCircle}>
-                            {/* Replace with your actual logo */}
-                            <Text style={styles.logoText}>Friendli</Text>
-                        </View>
-                    </View>
 
                     <View style={styles.headerContainer}>
-                        <Text style={styles.heading}>Sign In</Text>
-                        <Text style={styles.subheading}>Welcome back!</Text>
+                        <Text style={styles.heading}>Forgot Password</Text>
+                        <Text style={styles.subheading}>Enter your email address to continue</Text>
                     </View>
 
                     <View style={styles.formContainer}>
@@ -153,50 +140,19 @@ export function Login({ navigation }) {
                             returnKeyType="next"
                         />
 
-                        <InputField
-                            label="Password"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={true}
-                            error={errors.password}
-                        />
-
-                        <TouchableOpacity
-                            style={styles.forgotPasswordContainer}
-                            onPress={() => navigation.navigate("ForgottenPassword")}
-                        >
-                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-
                         <AppButton
                             onPress={handleLogin}
                             style={styles.loginButton}
                         >
-                            Login
+                            Send mail
                         </AppButton>
                     </View>
 
-                    <View style={styles.dividerContainer}>
-                        <View style={styles.divider} />
-                        <Text style={styles.dividerText}>OR</Text>
-                        <View style={styles.divider} />
-                    </View>
-
-                    <View style={styles.socialLoginContainer}>
-                        <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign in with Google</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign in with Apple</Text>
-                        </TouchableOpacity>
-                    </View>
 
                     <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation?.navigate("SignUp")}>
-                            <Text style={styles.signupLink}>Sign Up</Text>
+                        <Text style={styles.signupText}>Remember password? </Text>
+                        <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
+                            <Text style={styles.signupLink}>Sign in</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -217,6 +173,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingHorizontal: 24,
         paddingBottom: 40,
+        justifyContent: "center"
     },
     logoContainer: {
         alignItems: 'center',
