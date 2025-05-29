@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import {
     Text,
     TextInput,
@@ -9,136 +9,55 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image,
     Alert
 } from 'react-native';
-import { Theme } from '../Components/Theme'; // Adjust the import path as necessary
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { Theme } from '../Components/Theme';
 import { auth, db } from '../Firebase/settigns';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { doc, setDoc } from 'firebase/firestore';
 import { AppContext } from '../Components/globalVariables';
+import { AppButton } from '../Components/AppButton';
+import { InputField } from '../Components/InputField';
 
-
-// Button component
-export function AppButton({ children, onPress, variant = "primary", style }) {
-    const buttonStyles = [styles.button];
-    const textStyles = [styles.buttonText];
-
-    if (variant === "primary") {
-        buttonStyles.push(styles.primaryButton);
-    } else if (variant === "outline") {
-        buttonStyles.push(styles.outlineButton);
-        textStyles.push(styles.outlineButtonText);
-    } else if (variant === "text") {
-        buttonStyles.push(styles.textButton);
-        textStyles.push(styles.textButtonText);
-    }
-
-    return (
-        <TouchableOpacity
-            style={[...buttonStyles, style]}
-            onPress={onPress}
-            activeOpacity={0.8}
-        >
-            <Text style={textStyles}>{children}</Text>
-        </TouchableOpacity>
-    );
-}
-
-// Input field component
-export function InputField({ label, placeholder, value, onChangeText, secureTextEntry = false, keyboardType = "default", autoCapitalize = "none", error, }) {
-    return (
-        <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>{label}</Text>
-            <TextInput
-                style={[styles.input, error && styles.inputError]}
-                placeholder={placeholder}
-                placeholderTextColor={Theme.colors.gray}
-                value={value}
-                onChangeText={onChangeText}
-                secureTextEntry={secureTextEntry}
-                keyboardType={keyboardType}
-                autoCapitalize={autoCapitalize}
-            />
-            {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
-    );
-}
+const validationSchema = Yup.object().shape({
+    firstname: Yup.string().required('First name is required'),
+    lastname: Yup.string().required('Last name is required'),
+    email: Yup.string().email('Email is invalid').required('Email is required'),
+    password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+    confirmPassword: Yup.string()
+        .oneOf([Yup.ref('password')], 'Passwords do not match')
+        .required('Please confirm your password')
+});
 
 export function SignUp({ navigation }) {
     const { setPreloader, setUserUID } = useContext(AppContext);
-    const [firstname, setFirstname] = useState('');
-    const [lastname, setLastname] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [errors, setErrors] = useState({});
 
-    const validateForm = () => {
-        const newErrors = {};
+    const handleSignup = async (values) => {
+        setPreloader(true);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+            const userid = userCredential.user.uid;
 
-        if (!firstname) {
-            newErrors.firstname = "Name is required";
-        }
-        if (!lastname) {
-            newErrors.newErrors = "Name is required";
-        }
+            await setDoc(doc(db, "users", userid), {
+                firstname: values.firstname,
+                lastname: values.lastname,
+                email: values.email,
+                image: null,
+                bio: "",
+                phone: "",
+                location: null,
+                createdAt: new Date().getTime(),
+            });
 
-        if (!email) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = "Email is invalid";
-        }
-
-        if (!password) {
-            newErrors.password = "Password is required";
-        } else if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
-        }
-
-        if (!confirmPassword) {
-            newErrors.confirmPassword = "Please confirm your password";
-        } else if (password !== confirmPassword) {
-            newErrors.confirmPassword = "Passwords do not match";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSignup = () => {
-        if (validateForm()) {
-            setPreloader(true)
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    const userid = userCredential.user.uid;
-                    // addDoc() and setDoc() to add a new document to the Firestore
-                    // addDoc() will add a new document to the collection and generate a unique ID for it
-                    // setDoc() will create a document with a specified ID
-                    setDoc(doc(db, "users", userid), {
-                        firstname,
-                        lastname,
-                        email,
-                        image: null,
-                        bio: "",
-                        phone: "",
-                        location: null,
-                        createdAt: new Date().getTime(),
-                    }).then(() => {
-                        setUserUID(userid)
-                        setPreloader(false)
-                        navigation.navigate("HomeScreen", { email });
-                    })
-                        .catch((error) => {
-                            Alert.alert("Error", errorMessage(error.code));
-                            setPreloader(false)
-                        })
-                })
-                .catch((error) => {
-                    setPreloader(false)
-                    Alert.alert("Login Failed", errorMessage(error.code));
-                });
+            setUserUID(userid);
+            setPreloader(false);
+            navigation.navigate("HomeScreen", { email: values.email });
+        } catch (error) {
+            setPreloader(false);
+            Alert.alert("Signup Failed", errorMessage(error.code));
         }
     };
 
@@ -148,13 +67,9 @@ export function SignUp({ navigation }) {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.keyboardAvoidingView}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContainer}
-                    showsVerticalScrollIndicator={false}
-                >
+                <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                     <View style={styles.logoContainer}>
                         <View style={styles.logoCircle}>
-                            {/* Replace with your actual logo */}
                             <Text style={styles.logoText}>Friendli</Text>
                         </View>
                     </View>
@@ -164,75 +79,76 @@ export function SignUp({ navigation }) {
                         <Text style={styles.subheading}>Sign up to get started!</Text>
                     </View>
 
-                    <View style={styles.formContainer}>
-                        <InputField
-                            label="First Name"
-                            placeholder="Enter your first name"
-                            value={firstname}
-                            onChangeText={setFirstname}
-                            autoCapitalize="words"
-                            error={errors.firstname}
-                        />
-                        <InputField
-                            label="Last Name"
-                            placeholder="Enter your last name"
-                            value={lastname}
-                            onChangeText={setLastname}
-                            autoCapitalize="words"
-                            error={errors.lastname}
-                        />
+                    <Formik
+                        initialValues={{
+                            firstname: '',
+                            lastname: '',
+                            email: '',
+                            password: '',
+                            confirmPassword: ''
+                        }}
+                        validationSchema={validationSchema}
+                        onSubmit={handleSignup}
+                    >
+                        {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                            <View style={styles.formContainer}>
+                                <InputField
+                                    label="First Name"
+                                    placeholder="Enter your first name"
+                                    value={values.firstname}
+                                    onChangeText={handleChange('firstname')}
+                                    onBlur={handleBlur('firstname')}
+                                    autoCapitalize="words"
+                                    error={touched.firstname && errors.firstname}
+                                />
 
-                        <InputField
-                            label="Email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            error={errors.email}
-                        />
+                                <InputField
+                                    label="Last Name"
+                                    placeholder="Enter your last name"
+                                    value={values.lastname}
+                                    onChangeText={handleChange('lastname')}
+                                    onBlur={handleBlur('lastname')}
+                                    autoCapitalize="words"
+                                    error={touched.lastname && errors.lastname}
+                                />
 
-                        <InputField
-                            label="Password"
-                            placeholder="Create a password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={true}
-                            error={errors.password}
-                        />
+                                <InputField
+                                    label="Email"
+                                    placeholder="Enter your email"
+                                    value={values.email}
+                                    onChangeText={handleChange('email')}
+                                    onBlur={handleBlur('email')}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    error={touched.email && errors.email}
+                                />
 
-                        <InputField
-                            label="Confirm Password"
-                            placeholder="Confirm your password"
-                            value={confirmPassword}
-                            onChangeText={setConfirmPassword}
-                            secureTextEntry={true}
-                            error={errors.confirmPassword}
-                        />
+                                <InputField
+                                    label="Password"
+                                    placeholder="Create a password"
+                                    value={values.password}
+                                    onChangeText={handleChange('password')}
+                                    onBlur={handleBlur('password')}
+                                    secureTextEntry={true}
+                                    error={touched.password && errors.password}
+                                />
 
-                        <AppButton
-                            onPress={handleSignup}
-                            style={styles.loginButton}
-                        >
-                            Sign Up
-                        </AppButton>
-                    </View>
+                                <InputField
+                                    label="Confirm Password"
+                                    placeholder="Confirm your password"
+                                    value={values.confirmPassword}
+                                    onChangeText={handleChange('confirmPassword')}
+                                    onBlur={handleBlur('confirmPassword')}
+                                    secureTextEntry={true}
+                                    error={touched.confirmPassword && errors.confirmPassword}
+                                />
 
-                    <View style={styles.dividerContainer}>
-                        <View style={styles.divider} />
-                        <Text style={styles.dividerText}>OR</Text>
-                        <View style={styles.divider} />
-                    </View>
-
-                    <View style={styles.socialLoginContainer}>
-                        <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign up with Google</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton}>
-                            <Text style={styles.socialButtonText}>Sign up with Apple</Text>
-                        </TouchableOpacity>
-                    </View>
+                                <AppButton onPress={handleSubmit} style={styles.loginButton}>
+                                    Sign Up
+                                </AppButton>
+                            </View>
+                        )}
+                    </Formik>
 
                     <View style={styles.signupContainer}>
                         <Text style={styles.signupText}>Already have an account? </Text>
@@ -296,44 +212,6 @@ const styles = StyleSheet.create({
         width: '100%',
         marginBottom: 25,
     },
-    inputContainer: {
-        marginBottom: 16,
-    },
-    inputLabel: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.light.text1,
-        marginBottom: 8,
-    },
-    input: {
-        height: 50,
-        backgroundColor: Theme.colors.light.bg2,
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        fontFamily: Theme.fonts.text400,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-        borderWidth: 1,
-        borderColor: Theme.colors.light.line,
-    },
-    inputError: {
-        borderColor: Theme.colors.red,
-    },
-    errorText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 12,
-        color: Theme.colors.red,
-        marginTop: 4,
-    },
-    forgotPasswordContainer: {
-        alignSelf: 'flex-end',
-        marginBottom: 24,
-    },
-    forgotPasswordText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 14,
-        color: Theme.colors.blueMedium,
-    },
     loginButton: {
         marginTop: 10,
     },
@@ -342,64 +220,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    primaryButton: {
         backgroundColor: Theme.colors.primary,
-    },
-    outlineButton: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: Theme.colors.primary,
-    },
-    textButton: {
-        backgroundColor: 'transparent',
-        height: 40,
     },
     buttonText: {
         fontFamily: Theme.fonts.text600,
         fontSize: 16,
         color: '#FFFFFF',
-    },
-    outlineButtonText: {
-        color: Theme.colors.primary,
-    },
-    textButtonText: {
-        color: Theme.colors.primary,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 24,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-        backgroundColor: Theme.colors.light.line,
-    },
-    dividerText: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.gray,
-        marginHorizontal: 10,
-    },
-    socialLoginContainer: {
-        marginBottom: 30,
-    },
-    socialButton: {
-        flexDirection: 'row',
-        height: 50,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: Theme.colors.light.line,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    socialButtonText: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-        marginLeft: 10,
     },
     signupContainer: {
         flexDirection: 'row',

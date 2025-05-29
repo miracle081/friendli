@@ -1,74 +1,92 @@
 import { useContext, useState } from "react";
-import {
-    StyleSheet,
-    Text,
-    View,
-    Image,
-    TouchableOpacity,
-    TextInput,
-    SafeAreaView,
-    Platform,
-    StatusBar,
-    Alert
-} from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, SafeAreaView, Platform, StatusBar, Alert } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
 import { AppContext } from "../Components/globalVariables";
 import { Theme } from "../Components/Theme";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import {
-    faCameraRotate,
-    faImage,
-    faVideo,
-    faGlobe,
-    faCaretDown,
-    faTimes,
-    faSmile
-} from "@fortawesome/free-solid-svg-icons";
-import { addDoc, collection, } from "firebase/firestore";
-import { db } from "../Firebase/settigns";
+import { faImage, faVideo, faGlobe, faCaretDown, faTimes, faSmile } from "@fortawesome/free-solid-svg-icons";
+import { addDoc, collection } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../Firebase/settigns";
 import { errorMessage } from "../Components/formatErrorMessage";
 import { ToastApp } from "../Components/Toast";
 
 export function CreatePost({ navigation }) {
     const { userUID, userInfo, setPreloader } = useContext(AppContext);
     const [caption, setCaption] = useState("");
-    const [media, setMedia] = useState(["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTatLiJAG6jse2XTu96VcidI8X5OYIvWzcenw&s"]);
+    const [media, setMedia] = useState([]);
 
-    function handlePost() {
-        setPreloader(true);
-        addDoc(collection(db, "posts"), {
-            caption: caption,
-            media: media,
-            userUID: userUID,
-            userInfo: {
-                firstname: userInfo.firstname,
-                lastname: userInfo.lastname,
-                image: userInfo.image,
-                bio: userInfo.bio,
-            },
-            timestamp: new Date().getTime(),
-            heart: [],
-            comments: [],
-            shares: [],
-            privacy: "public",
-        })
-            .then(() => {
-                setPreloader(false);
-                setCaption("");
-                setMedia([]);
-                ToastApp("Post created successfully", "LONG");
-                navigation.navigate("HomeScreen", { screen: "Home" });
-            }).catch((error) => {
-                setPreloader(false);
-                console.log("Error adding document: ", error);
-                Alert.alert("Error adding document", errorMessage(error.code));
-            });
+    async function pickImage() {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        // if (!permissionResult.granted) {
+        //     Alert.alert("Permission required", "Permission to access camera roll is required!");
+        //     return;
+        // }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setMedia([result.assets[0].uri]);
+        }
     }
 
+    async function getblob(imageUri) {
+        const response = await fetch(imageUri);
+        const blob = await response.json();
+        return blob;
+    }
+
+    async function handlePost() {
+        if (!caption.trim() && media.length === 0) {
+            Alert.alert("Error", "Please add some content or select an image");
+            return;
+        }
+
+        setPreloader(true);
+
+        try {
+
+            await addDoc(collection(db, "posts"), {
+                caption: caption,
+                media,
+                userUID: userUID,
+                userInfo: {
+                    firstname: userInfo.firstname,
+                    lastname: userInfo.lastname,
+                    image: userInfo.image,
+                    bio: userInfo.bio,
+                },
+                timestamp: new Date().getTime(),
+                heart: [],
+                comments: [],
+                shares: [],
+                privacy: "public",
+            });
+
+            setPreloader(false);
+            setCaption("");
+            setMedia([]);
+            ToastApp("Post created successfully", "LONG");
+            navigation.navigate("HomeScreen", { screen: "Home" });
+        } catch (error) {
+            setPreloader(false);
+            console.log("Error adding document: ", error);
+            Alert.alert("Error adding document", errorMessage(error.code));
+        }
+    }
+
+    function removeImage() {
+        setMedia([]);
+    }
 
     return (
         <SafeAreaView style={styles.container}>
-
-            {/* User Info Section */}
             <View style={styles.userInfoContainer}>
                 <Image source={{ uri: userInfo?.image }} style={styles.userAvatar} />
                 <View style={styles.userNamePrivacyContainer}>
@@ -81,7 +99,6 @@ export function CreatePost({ navigation }) {
                 </View>
             </View>
 
-            {/* Post Content Section */}
             <View style={styles.postContentContainer}>
                 <TextInput
                     style={styles.postInput}
@@ -91,13 +108,21 @@ export function CreatePost({ navigation }) {
                     value={caption}
                     onChangeText={inp => setCaption(inp)}
                 />
+
+                {media.length > 0 && (
+                    <View style={styles.selectedImageContainer}>
+                        <Image source={{ uri: media[0] }} style={styles.selectedImage} />
+                        <TouchableOpacity onPress={removeImage} style={styles.removeImageButton}>
+                            <FontAwesomeIcon icon={faTimes} size={16} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
 
-            {/* Media Attachment Section */}
             <View style={styles.mediaSection}>
                 <Text style={styles.mediaSectionTitle}>Add to your post</Text>
                 <View style={styles.mediaOptions}>
-                    <TouchableOpacity style={styles.mediaOption}>
+                    <TouchableOpacity style={styles.mediaOption} onPress={pickImage}>
                         <View style={[styles.iconContainer, { backgroundColor: Theme.colors.greenLight }]}>
                             <FontAwesomeIcon icon={faImage} size={18} color={Theme.colors.primary} />
                         </View>
@@ -120,7 +145,6 @@ export function CreatePost({ navigation }) {
                 </View>
             </View>
 
-            {/* Post Button - Bottom */}
             <TouchableOpacity onPress={handlePost} style={styles.postButtonBottom}>
                 <Text style={styles.postButtonBottomText}>Post</Text>
             </TouchableOpacity>
@@ -133,32 +157,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Theme.colors.light.bg,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: Theme.colors.light.line,
-    },
-    closeButton: {
-        padding: 8,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontFamily: Theme.fonts.text600,
-        color: Theme.colors.light.text1,
-    },
-    postButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-    },
-    postButtonText: {
-        color: Theme.colors.blueMedium,
-        fontFamily: Theme.fonts.text600,
-        fontSize: 16,
     },
     userInfoContainer: {
         flexDirection: 'row',
@@ -206,6 +204,27 @@ const styles = StyleSheet.create({
         color: Theme.colors.light.text1,
         textAlignVertical: 'top',
         height: 200,
+    },
+    selectedImageContainer: {
+        marginTop: 12,
+        position: 'relative',
+    },
+    selectedImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        resizeMode: 'cover',
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: 15,
+        width: 30,
+        height: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     mediaSection: {
         paddingHorizontal: 16,

@@ -1,34 +1,9 @@
 import { useContext } from "react";
-import {
-    StyleSheet,
-    Text,
-    View,
-    Image,
-    TouchableOpacity,
-    ScrollView,
-    SafeAreaView,
-    Platform,
-    StatusBar
-} from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Platform, StatusBar } from "react-native";
 import { AppContext } from "../Components/globalVariables";
 import { Theme } from "../Components/Theme";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import {
-    faCamera,
-    faPencilAlt,
-    faEllipsisH,
-    faUserPlus,
-    faCommentAlt,
-    faShareSquare,
-    faThumbsUp,
-    faImage,
-    faMapMarkerAlt,
-    faBriefcase,
-    faGraduationCap,
-    faHeart,
-    faHome,
-    faWallet
-} from "@fortawesome/free-solid-svg-icons";
+import { faPencilAlt, faImage, faMapMarkerAlt, faWallet } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../Firebase/settigns";
@@ -38,111 +13,114 @@ import { errorMessage } from "../Components/formatErrorMessage";
 const RenderPost = ({ item, userUID }) => {
     const checkIfUserLiked = item.heart.includes(userUID);
 
-    function handleheart() {
-        let updatedHearts = [];
-        if (checkIfUserLiked) {
-            // Remove like
-            updatedHearts = item.heart.filter(uid => uid !== userUID);
-        } else {
-            // Add like
-            updatedHearts = [...item.heart, userUID];
+    const handleheart = async () => {
+        const updatedHearts = checkIfUserLiked ? item.heart.filter(uid => uid !== userUID) : [...item.heart, userUID];
+        try {
+            await updateDoc(doc(db, "posts", item.docID), { heart: updatedHearts });
+        } catch (error) {
+            console.error("Error updating post: ", error);
+            ToastApp(errorMessage(error.code), "LONG");
         }
-
-        updateDoc(doc(db, "posts", item.docID), {
-            heart: updatedHearts
-        })
-            .then(() => {
-                // console.log("Post updated successfully");
-            })
-            .catch((error) => {
-                console.error("Error updating post: ", error);
-                ToastApp(errorMessage(error.code), "LONG");
-            })
-    }
+    };
 
     return (
         <View style={styles.postContainer}>
             <View style={styles.postHeader}>
                 <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
-                <View style={{ marginLeft: 10 }}>
-                    <Text style={styles.profileName}>{item?.userInfo?.firstname} {item?.userInfo?.lastname}</Text>
-                    <Text style={styles.profileDetails}>{item?.userInfo?.bio}</Text>
+                <View style={styles.userInfo}>
+                    <Text style={styles.userName}>
+                        {item?.userInfo?.firstname} {item?.userInfo?.lastname}
+                    </Text>
+                    <Text style={styles.userBio}>{item?.userInfo?.bio}</Text>
                 </View>
             </View>
 
             <Text style={styles.postText}>{item.caption}</Text>
 
-            {item.media[0] && <Image source={{ uri: item.media[0] }} style={styles.postImage} />}
+            {item.media[0] && (
+                <Image source={{ uri: item.media[0] }} style={styles.postImage} />
+            )}
 
             <View style={styles.actionRow}>
-                <TouchableOpacity onPress={handleheart} style={styles.actionButton2}>
-                    <FontAwesome name={checkIfUserLiked ? "heart" : "heart-o"} size={20} color={checkIfUserLiked ? Theme.colors.red : "gray"} />
-                    <Text style={styles.actionText2}>{item.heart.length}</Text>
+                <TouchableOpacity onPress={handleheart} style={styles.actionButton}>
+                    <FontAwesome
+                        name={checkIfUserLiked ? "heart" : "heart-o"}
+                        size={20}
+                        color={checkIfUserLiked ? Theme.colors.red : "gray"}
+                    />
+                    <Text style={styles.actionText}>{item.heart.length}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionButton2}>
+                <TouchableOpacity style={styles.actionButton}>
                     <FontAwesome name="comment-o" size={20} color="black" />
-                    <Text style={styles.actionText2}>{item.comments}</Text>
+                    <Text style={styles.actionText}>{item.comments}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionButton2}>
+                <TouchableOpacity style={styles.actionButton}>
                     <FontAwesome name="share" size={20} color="black" />
-                    <Text style={styles.actionText2}>{item.shares}</Text>
+                    <Text style={styles.actionText}>{item.shares}</Text>
                 </TouchableOpacity>
             </View>
         </View>
-    )
+    );
 };
 
 export function Profile({ navigation }) {
     const { userInfo, posts, userUID } = useContext(AppContext);
-    const userPosts = posts.filter(item => item.userUID === userUID)
+    const userPosts = posts.filter(item => item.userUID === userUID);
 
     return (
         <View style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Cover Photo */}
+                <View style={styles.coverPhoto} />
 
-                {/* Cover Photo Section */}
-                <View style={styles.coverPhotoContainer}>
-                    <View style={{ height: 190, backgroundColor: Theme.colors.primary }}></View>
-                </View>
-
-                {/* Profile Info Section */}
-                <View style={styles.profileInfoContainer}>
+                {/* Profile Info */}
+                <View style={styles.profileSection}>
                     <View style={styles.profileImageContainer}>
-                        <Image source={{ uri: userInfo?.image || 'https://placehold.co/120/22C55E/FFFFFF/png' }} style={styles.profileImage} />
+                        <Image
+                            source={{ uri: userInfo?.image || 'https://placehold.co/120/22C55E/FFFFFF/png' }}
+                            style={styles.profileImage}
+                        />
                     </View>
-                    <Text style={styles.profileName}>{userInfo.firstname} {userInfo.lastname}</Text>
+
+                    <Text style={styles.profileName}>
+                        {userInfo.firstname} {userInfo.lastname}
+                    </Text>
                     <Text style={styles.profileBio}>{userInfo.bio}</Text>
 
-                    {/* Profile Action Buttons */}
-                    <View style={styles.profileActionContainer}>
-                        <TouchableOpacity style={[styles.actionButton, { backgroundColor: Theme.colors.primary }]}>
-                            <FontAwesomeIcon icon={faWallet} size={16} color={"white"} />
-                            <Text style={styles.actionButtonText}>Wallet</Text>
+                    {/* Action Buttons */}
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity onPress={() => navigation.navigate("Wallet")} style={[styles.button, styles.primaryButton]}>
+                            <FontAwesomeIcon icon={faWallet} size={16} color="white" />
+                            <Text style={styles.buttonText}>Wallet</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => navigation.navigate("EditProfile")} style={[styles.actionButton, { backgroundColor: Theme.colors.light.bg2 }]}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate("EditProfile")}
+                            style={[styles.button, styles.secondaryButton]}
+                        >
                             <FontAwesomeIcon icon={faPencilAlt} size={16} color={Theme.colors.light.text1} />
-                            <Text style={[styles.actionButtonText, { color: Theme.colors.light.text1 }]}>Edit Profile</Text>
+                            <Text style={[styles.buttonText, styles.secondaryButtonText]}>Edit Profile</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* Profile Stats Divider */}
                 <View style={styles.divider} />
 
-
-                {/* Posts Section */}
-                <View style={styles.sectionContainer}>
-                    <View style={styles.postCreateContainer}>
-                        <Image source={{ uri: userInfo?.image || 'https://placehold.co/40/22C55E/FFFFFF/png' }} style={styles.postUserImage} />
-                        <TouchableOpacity style={styles.postInputPlaceholder}>
+                {/* Post Creation */}
+                <View style={styles.postCreateSection}>
+                    <View style={styles.postCreateRow}>
+                        <Image
+                            source={{ uri: userInfo?.image || 'https://placehold.co/40/22C55E/FFFFFF/png' }}
+                            style={styles.postUserImage}
+                        />
+                        <TouchableOpacity style={styles.postInput}>
                             <Text style={styles.postInputText}>What's on your mind?</Text>
                         </TouchableOpacity>
                     </View>
 
-                    <View style={styles.postOptionsContainer}>
+                    <View style={styles.postOptions}>
                         <TouchableOpacity style={styles.postOption}>
                             <FontAwesomeIcon icon={faImage} size={18} color={Theme.colors.green} />
                             <Text style={styles.postOptionText}>Photo</Text>
@@ -157,9 +135,9 @@ export function Profile({ navigation }) {
                     </View>
                 </View>
 
-                {/* Posts List */}
-                {userPosts.map(post => (
-                    <RenderPost item={post} userUID={userUID} />
+                {/* Posts */}
+                {userPosts.map((post, index) => (
+                    <RenderPost key={index} item={post} userUID={userUID} />
                 ))}
             </ScrollView>
         </View>
@@ -172,32 +150,11 @@ const styles = StyleSheet.create({
         backgroundColor: Theme.colors.light.bg2,
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 10,
-    },
-    coverPhotoContainer: {
-        position: 'relative',
-    },
     coverPhoto: {
-        height: 180,
-        width: '100%',
+        height: 190,
+        backgroundColor: Theme.colors.primary,
     },
-    editCoverButton: {
-        position: 'absolute',
-        bottom: 10,
-        right: 10,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 20,
-        padding: 8,
-    },
-    profileInfoContainer: {
+    profileSection: {
         backgroundColor: Theme.colors.light.bg,
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
@@ -207,7 +164,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     profileImageContainer: {
-        position: 'relative',
         marginTop: -50,
     },
     profileImage: {
@@ -216,17 +172,6 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         borderWidth: 4,
         borderColor: Theme.colors.light.bg,
-    },
-    editProfileImageButton: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        backgroundColor: Theme.colors.primary,
-        borderRadius: 15,
-        width: 30,
-        height: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     profileName: {
         fontFamily: Theme.fonts.text700,
@@ -242,12 +187,12 @@ const styles = StyleSheet.create({
         marginTop: 4,
         marginHorizontal: 40,
     },
-    profileActionContainer: {
+    buttonRow: {
         flexDirection: 'row',
         marginTop: 16,
         width: '100%',
     },
-    actionButton: {
+    button: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -257,46 +202,32 @@ const styles = StyleSheet.create({
         flex: 1,
         marginHorizontal: 4,
     },
-    actionButtonText: {
+    primaryButton: {
+        backgroundColor: Theme.colors.primary,
+    },
+    secondaryButton: {
+        backgroundColor: Theme.colors.light.bg2,
+    },
+    buttonText: {
         fontFamily: Theme.fonts.text600,
         fontSize: 14,
         color: 'white',
         marginLeft: 4,
     },
-    moreOptionsButton: {
-        backgroundColor: Theme.colors.light.bg2,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        marginLeft: 4,
-        justifyContent: 'center',
+    secondaryButtonText: {
+        color: Theme.colors.light.text1,
     },
     divider: {
         height: 1,
         backgroundColor: Theme.colors.light.line,
         marginVertical: 12,
     },
-    sectionContainer: {
+    postCreateSection: {
         backgroundColor: Theme.colors.light.bg,
         padding: 16,
         marginVertical: 8,
     },
-    sectionTitleContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    sectionTitle: {
-        fontFamily: Theme.fonts.text600,
-        fontSize: 18,
-        color: Theme.colors.light.text1,
-    },
-    seeAllText: {
-        fontFamily: Theme.fonts.text600,
-        fontSize: 14,
-        color: Theme.colors.blueMedium,
-    },
-    postCreateContainer: {
+    postCreateRow: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingBottom: 12,
@@ -306,7 +237,7 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
     },
-    postInputPlaceholder: {
+    postInput: {
         flex: 1,
         backgroundColor: Theme.colors.light.bg2,
         borderRadius: 20,
@@ -319,7 +250,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Theme.colors.light.text2,
     },
-    postOptionsContainer: {
+    postOptions: {
         flexDirection: 'row',
         borderTopWidth: 1,
         borderTopColor: Theme.colors.light.line,
@@ -341,106 +272,63 @@ const styles = StyleSheet.create({
         width: 1,
         backgroundColor: Theme.colors.light.line,
     },
+    // Post styles
     postContainer: {
         backgroundColor: Theme.colors.light.bg,
-        marginVertical: 8,
-        padding: 16,
-    },
-    postHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    postHeaderInfo: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    postUserName: {
-        fontFamily: Theme.fonts.text600,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-    },
-    postTime: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 12,
-        color: Theme.colors.light.text2,
-    },
-    postMoreButton: {
-        padding: 4,
-    },
-    postContent: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-        marginVertical: 12,
-        lineHeight: 22,
-    },
-    postStats: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingBottom: 12,
-    },
-    postStatText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 12,
-        color: Theme.colors.light.text2,
-    },
-    postActions: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        paddingVertical: 8,
-    },
-    postAction: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    postActionText: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.light.text2,
-        marginLeft: 8,
-    },
-    postContainer: {
         marginHorizontal: 10,
         marginVertical: 6,
-        padding: 10,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10
+        padding: 16,
+        borderRadius: 10,
     },
     postHeader: {
         flexDirection: 'row',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     profilePic: {
         width: 50,
         height: 50,
-        borderRadius: 25
+        borderRadius: 25,
     },
-    profileName: {
-        fontWeight: 'bold'
+    userInfo: {
+        marginLeft: 12,
+        flex: 1,
     },
-    profileDetails: {
+    userName: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        color: Theme.colors.light.text1,
+    },
+    userBio: {
         fontSize: 12,
-        color: '#555'
+        color: Theme.colors.light.text2,
     },
     postText: {
-        marginVertical: 8,
-        fontSize: 14
+        marginVertical: 12,
+        fontSize: 14,
+        color: Theme.colors.light.text1,
+        lineHeight: 20,
     },
     postImage: {
         width: '100%',
         height: 200,
-        borderRadius: 10
+        borderRadius: 10,
+        marginBottom: 8,
     },
     actionRow: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 8
+        marginTop: 8,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: Theme.colors.light.line,
     },
-    actionButton2: {
+    actionButton: {
         flexDirection: 'row',
-        alignItems: 'center'
+        alignItems: 'center',
     },
-    actionText2: {
-        marginLeft: 5
-    }
+    actionText: {
+        marginLeft: 5,
+        fontSize: 14,
+        color: Theme.colors.light.text2,
+    },
 });

@@ -22,45 +22,9 @@ const storiesData = [
     { name: 'Events', image: 'https://cdn-icons-png.flaticon.com/512/6079/6079964.png' },
     { name: 'Marketplace', image: 'https://cdn-icons-png.flaticon.com/512/9198/9198446.png' }
 ];
-
-const postsData = [
-    {
-        name: 'Savannah Nguyen',
-        details: 'Chef at Emirate Foods • 5 mins ago',
-        text: 'Here’s a delicious and healthy salad recipe to try out this weekend! ',
-        likes: 684,
-        comments: 245,
-        shares: 102,
-        profilePic: 'https://randomuser.me/api/portraits/women/15.jpg',
-        postImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTatLiJAG6jse2XTu96VcidI8X5OYIvWzcenw&s'
-    },
-    {
-        name: 'Cody Fisher',
-        details: 'Food Blogger • 15 mins ago',
-        text: 'Made this creamy avocado toast for brunch today. So simple, so good! ',
-        likes: 512,
-        comments: 132,
-        shares: 67,
-        profilePic: 'https://randomuser.me/api/portraits/men/16.jpg',
-        postImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfjhkUsJa4nFmUhaf69WdfrRca0zbetiMmjQ&s'
-    },
-    {
-        name: 'Wade Warren',
-        details: 'Nutritionist • 30 mins ago',
-        text: 'Hydration is key! Don’t forget to drink your water and eat your greens ',
-        likes: 389,
-        comments: 98,
-        shares: 40,
-        profilePic: 'https://randomuser.me/api/portraits/men/20.jpg',
-        postImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyDywZygHNZKNoXZNF_26ainkkq6bjD2GU5Q&s'
-    }
-];
-
 const Home = ({ navigation }) => {
     const { userUID, userInfo, setPreloader, setUserInfo, posts, setPosts } = useContext(AppContext)
     const { width, height } = Dimensions.get("window");
-
-
 
     useEffect(() => {
         // function getuser() {
@@ -184,7 +148,7 @@ const Home = ({ navigation }) => {
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-                        <Image source={{ uri: userInfo.image }} style={styles.profilePic} />
+                        <Image source={{ uri: userInfo?.image }} style={styles.profilePic} />
                     </TouchableOpacity>
                     <TextInput style={styles.searchBar} placeholder="Search" placeholderTextColor="#999" />
                     <TouchableOpacity>

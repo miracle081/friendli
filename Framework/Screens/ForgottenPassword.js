@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import {
     Text,
     TextInput,
@@ -9,104 +9,38 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image,
     Alert
 } from 'react-native';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 import { Theme } from '../Components/Theme';
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { AppContext } from '../Components/globalVariables';
 import { ToastApp } from '../Components/Toast';
+import { InputField } from '../Components/InputField';
+import { AppButton } from '../Components/AppButton';
 
-// Button component
-export function AppButton({ children, onPress, variant = "primary", style }) {
-    const buttonStyles = [styles.button];
-    const textStyles = [styles.buttonText];
+// Validation Schema
+const validationSchema = Yup.object().shape({
+    email: Yup.string().email('Email is invalid').required('Email is required')
+});
 
-    if (variant === "primary") {
-        buttonStyles.push(styles.primaryButton);
-    } else if (variant === "outline") {
-        buttonStyles.push(styles.outlineButton);
-        textStyles.push(styles.outlineButtonText);
-    } else if (variant === "text") {
-        buttonStyles.push(styles.textButton);
-        textStyles.push(styles.textButtonText);
-    }
 
-    return (
-        <TouchableOpacity
-            style={[...buttonStyles, style]}
-            onPress={onPress}
-            activeOpacity={0.8}
-        >
-            <Text style={textStyles}>{children}</Text>
-        </TouchableOpacity>
-    );
-}
-
-// Input field component
-export function InputField({
-    label,
-    placeholder,
-    value,
-    onChangeText,
-    secureTextEntry = false,
-    keyboardType = "default",
-    autoCapitalize = "none",
-    error
-}) {
-    return (
-        <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>{label}</Text>
-            <TextInput
-                style={[styles.input, error && styles.inputError]}
-                placeholder={placeholder}
-                placeholderTextColor={Theme.colors.gray}
-                value={value}
-                onChangeText={onChangeText}
-                secureTextEntry={secureTextEntry}
-                keyboardType={keyboardType}
-                autoCapitalize={autoCapitalize}
-            />
-            {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
-    );
-}
-
-// Login Screen
 export function ForgottenPassword({ navigation }) {
-    const { setPreloader, setUserUID } = useContext(AppContext);
-    const [email, setEmail] = useState('');
-    const [errors, setErrors] = useState({});
+    const { setPreloader } = useContext(AppContext);
 
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!email) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = "Email is invalid";
-        }
-
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleLogin = () => {
-        if (validateForm()) {
-            setPreloader(true)
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    setPreloader(false)
-                    ToastApp("A link has been sent to your email", "LONG")
-                    navigation.goBack();
-                })
-                .catch((error) => {
-                    setPreloader(false)
-                    Alert.alert("Login Failed", errorMessage(error.code));
-                });
+    const handlePasswordReset = async (values) => {
+        setPreloader(true);
+        try {
+            await sendPasswordResetEmail(auth, values.email);
+            setPreloader(false);
+            ToastApp("A link has been sent to your email", "LONG");
+            navigation.goBack();
+        } catch (error) {
+            setPreloader(false);
+            Alert.alert("Reset Failed", errorMessage(error.code));
         }
     };
 
@@ -116,38 +50,36 @@ export function ForgottenPassword({ navigation }) {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.keyboardAvoidingView}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContainer}
-                    showsVerticalScrollIndicator={false}
-                >
-
+                <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                     <View style={styles.headerContainer}>
                         <Text style={styles.heading}>Forgot Password</Text>
                         <Text style={styles.subheading}>Enter your email address to continue</Text>
                     </View>
 
-                    <View style={styles.formContainer}>
-                        <InputField
-                            label="Email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            error={errors.email}
-                            autoCompleteType="email"
-                            textContentType="emailAddress"
-                            returnKeyType="next"
-                        />
+                    <Formik
+                        initialValues={{ email: '' }}
+                        validationSchema={validationSchema}
+                        onSubmit={handlePasswordReset}
+                    >
+                        {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                            <View style={styles.formContainer}>
+                                <InputField
+                                    label="Email"
+                                    placeholder="Enter your email"
+                                    value={values.email}
+                                    onChangeText={handleChange('email')}
+                                    onBlur={handleBlur('email')}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    error={touched.email && errors.email}
+                                />
 
-                        <AppButton
-                            onPress={handleLogin}
-                            style={styles.loginButton}
-                        >
-                            Send mail
-                        </AppButton>
-                    </View>
-
+                                <AppButton onPress={handleSubmit} style={styles.loginButton}>
+                                    Send Reset Link
+                                </AppButton>
+                            </View>
+                        )}
+                    </Formik>
 
                     <View style={styles.signupContainer}>
                         <Text style={styles.signupText}>Remember password? </Text>
@@ -175,24 +107,6 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
         justifyContent: "center"
     },
-    logoContainer: {
-        alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 20,
-    },
-    logoCircle: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: Theme.colors.lightGreen,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoText: {
-        fontFamily: Theme.fonts.text600,
-        fontSize: 24,
-        color: Theme.colors.greenDark,
-    },
     headerContainer: {
         marginBottom: 30,
         alignItems: 'center',
@@ -212,44 +126,6 @@ const styles = StyleSheet.create({
         width: '100%',
         marginBottom: 25,
     },
-    inputContainer: {
-        marginBottom: 16,
-    },
-    inputLabel: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.light.text1,
-        marginBottom: 8,
-    },
-    input: {
-        height: 50,
-        backgroundColor: Theme.colors.light.bg2,
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        fontFamily: Theme.fonts.text400,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-        borderWidth: 1,
-        borderColor: Theme.colors.light.line,
-    },
-    inputError: {
-        borderColor: Theme.colors.red,
-    },
-    errorText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 12,
-        color: Theme.colors.red,
-        marginTop: 4,
-    },
-    forgotPasswordContainer: {
-        alignSelf: 'flex-end',
-        marginBottom: 24,
-    },
-    forgotPasswordText: {
-        fontFamily: Theme.fonts.text400,
-        fontSize: 14,
-        color: Theme.colors.blueMedium,
-    },
     loginButton: {
         marginTop: 10,
     },
@@ -258,64 +134,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    primaryButton: {
         backgroundColor: Theme.colors.primary,
-    },
-    outlineButton: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: Theme.colors.primary,
-    },
-    textButton: {
-        backgroundColor: 'transparent',
-        height: 40,
     },
     buttonText: {
         fontFamily: Theme.fonts.text600,
         fontSize: 16,
         color: '#FFFFFF',
-    },
-    outlineButtonText: {
-        color: Theme.colors.primary,
-    },
-    textButtonText: {
-        color: Theme.colors.primary,
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 24,
-    },
-    divider: {
-        flex: 1,
-        height: 1,
-        backgroundColor: Theme.colors.light.line,
-    },
-    dividerText: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 14,
-        color: Theme.colors.gray,
-        marginHorizontal: 10,
-    },
-    socialLoginContainer: {
-        marginBottom: 30,
-    },
-    socialButton: {
-        flexDirection: 'row',
-        height: 50,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: Theme.colors.light.line,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    socialButtonText: {
-        fontFamily: Theme.fonts.text500,
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-        marginLeft: 10,
     },
     signupContainer: {
         flexDirection: 'row',

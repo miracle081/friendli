@@ -8,7 +8,7 @@ export function AppButton({ disabled, textStyle, onPress, children, style, textC
             // flex: 1,
             borderRadius: 30,
             backgroundColor: buttonColor || Theme.colors.primary,
-            padding: 5,
+            padding: 8,
         },
     });
     return (
