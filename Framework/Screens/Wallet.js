@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
     View,
     Text,
@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { formatMoney } from '../Components/FormatMoney';
+import { AppContext } from '../Components/globalVariables';
 
 export const Wallet = ({ navigation }) => {
+    const { userUID, setPreloader, userInfo } = useContext(AppContext);
     const [showBalance, setShowBalance] = useState(true);
-
     const transactions = [
         {
             id: 1,
@@ -56,7 +57,7 @@ export const Wallet = ({ navigation }) => {
         }
     ];
 
-    const balance = 2847.52;
+    const balance = userInfo.balance;
 
     return (
         <SafeAreaView style={styles.container}>

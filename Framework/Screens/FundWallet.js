@@ -27,7 +27,7 @@ export const FundWallet = ({ navigation }) => {
 
     const confirmDeposit = () => {
         setShowModal(false);
-        navigation.navigate("Pay", { amount })
+        navigation.navigate("Pay", { amount: Number(amount) })
     };
 
     return (
