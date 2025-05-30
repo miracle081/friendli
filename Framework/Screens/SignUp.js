@@ -49,6 +49,7 @@ export function SignUp({ navigation }) {
                 bio: "",
                 phone: "",
                 location: null,
+                balance: 0,
                 createdAt: new Date().getTime(),
             });
 

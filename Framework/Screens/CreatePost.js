@@ -30,6 +30,7 @@ export function CreatePost({ navigation }) {
             aspect: [4, 3],
             quality: 0.8,
         });
+        console.log(JSON.stringify(result, null, 2));
 
         if (!result.canceled) {
             setMedia([result.assets[0].uri]);
@@ -204,6 +205,10 @@ const styles = StyleSheet.create({
         color: Theme.colors.light.text1,
         textAlignVertical: 'top',
         height: 200,
+        borderWidth: 0.5,
+        borderColor: Theme.colors.gray,
+        borderRadius: 10,
+        padding: 10
     },
     selectedImageContainer: {
         marginTop: 12,

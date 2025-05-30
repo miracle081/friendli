@@ -8,6 +8,7 @@ import { ForgottenPassword } from "../Screens/ForgottenPassword";
 import { EditProfile } from "../Screens/EditProfile";
 import { Wallet } from "../Screens/Wallet";
 import { FundWallet } from "../Screens/FundWallet";
+import { Pay } from "../Screens/Pay";
 
 
 const Stack = createNativeStackNavigator();
@@ -24,6 +25,7 @@ export function StackNavigator() {
                 <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: "Edit Profile" }} />
                 <Stack.Screen name="Wallet" component={Wallet} />
                 <Stack.Screen name="FundWallet" component={FundWallet} options={{ title: "Fund Wallet" }} />
+                <Stack.Screen name="Pay" component={Pay} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>
     )

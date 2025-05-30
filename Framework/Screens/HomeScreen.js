@@ -12,6 +12,7 @@ import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firesto
 import { db } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { ToastApp } from '../Components/Toast';
+import { formatTimeAgo } from '../Components/formatTimeAgo';
 
 
 
@@ -86,7 +87,6 @@ const Home = ({ navigation }) => {
                 // Add like
                 updatedHearts = [...item.heart, userUID];
             }
-
             updateDoc(doc(db, "posts", item.docID), {
                 heart: updatedHearts
             })
@@ -105,7 +105,8 @@ const Home = ({ navigation }) => {
                     <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
                     <View style={{ marginLeft: 10 }}>
                         <Text style={styles.profileName}>{item?.userInfo?.firstname} {item?.userInfo?.lastname}</Text>
-                        <Text style={styles.profileDetails}>{item?.userInfo?.bio}</Text>
+                        {item?.userInfo?.bio && <Text style={styles.profileDetails} numberOfLines={1}>{item?.userInfo?.bio}</Text>}
+                        <Text style={{ fontFamily: Theme.fonts.text600, color: Theme.colors.gray, fontSize: 13 }}>{formatTimeAgo(item.timestamp)}</Text>
                     </View>
                 </View>
 
@@ -306,7 +307,7 @@ export function HomeScreen() {
                     }
                     else if (route.name === 'CreatePost') {
                         size = focused ? 35 : 23
-                        iconName = focused ? 'bag-add' : 'bag-add-outline';
+                        iconName = focused ? 'add-circle-sharp' : 'add';
                     }
                     else if (route.name === 'Cart') {
                         size = focused ? 35 : 23

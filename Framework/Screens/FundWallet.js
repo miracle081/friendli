@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faWallet } from '@fortawesome/free-solid-svg-icons';
 import { Theme } from '../Components/Theme';
 
-export const FundWallet = () => {
+export const FundWallet = ({ navigation }) => {
     const [amount, setAmount] = useState('');
     const [showModal, setShowModal] = useState(false);
 
@@ -27,8 +27,7 @@ export const FundWallet = () => {
 
     const confirmDeposit = () => {
         setShowModal(false);
-        // Navigate to PayStack payment screen
-        console.log('Proceeding to PayStack payment for ₦' + amount);
+        navigation.navigate("Pay", { amount })
     };
 
     return (
