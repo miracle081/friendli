@@ -14,18 +14,71 @@ import { Theme } from "../Components/Theme";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faCamera } from "@fortawesome/free-solid-svg-icons";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../Firebase/settigns";
+import { db, storage } from "../Firebase/settigns";
 import { ToastApp } from "../Components/Toast";
 import { errorMessage } from "../Components/formatErrorMessage";
 import { InputField } from "../Components/InputField";
 import { AppButton } from "../Components/AppButton";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import * as ImagePicker from 'expo-image-picker';
+
 
 export function EditProfile({ navigation }) {
     const { userInfo, userUID, setPreloader } = useContext(AppContext);
     const [firstname, setFirstname] = useState(userInfo.firstname);
     const [lastname, setLastname] = useState(userInfo.lastname);
+    const [image, setImage] = useState(null);
     const [bio, setBio] = useState(userInfo.bio);
     const [email, setEmail] = useState(userInfo.email);
+
+    async function pickImage() {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        // if (!permissionResult.granted) {
+        //     Alert.alert("Permission required", "Permission to access camera roll is required!");
+        //     return;
+        // }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+            uploadImageToFirestore();
+        }
+    }
+
+    async function uploadImageToStorage(imageUri) {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        const filename = `posts/${userUID}`;
+        const imageRef = ref(storage, filename);
+
+        await uploadBytes(imageRef, blob);
+        return await getDownloadURL(imageRef);
+    }
+
+    async function uploadImageToFirestore() {
+        setPreloader(true);
+        try {
+            const uploadedUrl = await uploadImageToStorage(image);
+            await updateDoc(doc(db, "users", userUID), { image: uploadedUrl });
+            ToastApp("Profile picture updated successfully");
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            // ToastApp(errorMessage(error.code), "LONG");
+            setPreloader(false);
+        } finally {
+            setPreloader(false);
+        }
+    }
+
+
+
 
     const handleUpdate = async () => {
         setPreloader(true);
@@ -54,7 +107,7 @@ export function EditProfile({ navigation }) {
                             source={{ uri: userInfo?.image || 'https://placehold.co/120/22C55E/FFFFFF/png' }}
                             style={styles.profileImage}
                         />
-                        <TouchableOpacity style={styles.cameraButton}>
+                        <TouchableOpacity onPress={pickImage} style={styles.cameraButton}>
                             <FontAwesomeIcon icon={faCamera} size={14} color="white" />
                         </TouchableOpacity>
                     </View>

@@ -85,9 +85,9 @@ export function Profile({ navigation }) {
                     </View>
 
                     <Text style={styles.profileName}>
-                        {userInfo.firstname} {userInfo.lastname}
+                        {userInfo?.firstname} {userInfo?.lastname}
                     </Text>
-                    <Text style={styles.profileBio}>{userInfo.bio}</Text>
+                    <Text style={styles.profileBio}>{userInfo?.bio}</Text>
 
                     {/* Action Buttons */}
                     <View style={styles.buttonRow}>

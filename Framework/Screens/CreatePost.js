@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faImage, faVideo, faGlobe, faCaretDown, faTimes, faSmile } from "@fortawesome/free-solid-svg-icons";
 import { addDoc, collection } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../Firebase/settigns";
+import { storage, db, } from "../Firebase/settigns";
 import { errorMessage } from "../Components/formatErrorMessage";
 import { ToastApp } from "../Components/Toast";
 
@@ -30,17 +30,20 @@ export function CreatePost({ navigation }) {
             aspect: [4, 3],
             quality: 0.8,
         });
-        console.log(JSON.stringify(result, null, 2));
 
         if (!result.canceled) {
             setMedia([result.assets[0].uri]);
         }
     }
 
-    async function getblob(imageUri) {
+    async function uploadImageToFirebase(imageUri) {
         const response = await fetch(imageUri);
-        const blob = await response.json();
-        return blob;
+        const blob = await response.blob();
+        const filename = `posts/${userUID}`;
+        const imageRef = ref(storage, filename);
+
+        await uploadBytes(imageRef, blob);
+        return await getDownloadURL(imageRef);
     }
 
     async function handlePost() {
@@ -52,10 +55,16 @@ export function CreatePost({ navigation }) {
         setPreloader(true);
 
         try {
+            let uploadedMedia = [];
+
+            if (media.length > 0) {
+                const uploadedUrl = await uploadImageToFirebase(media[0]);
+                uploadedMedia = [uploadedUrl];
+            }
 
             await addDoc(collection(db, "posts"), {
                 caption: caption,
-                media,
+                media: uploadedMedia,
                 userUID: userUID,
                 userInfo: {
                     firstname: userInfo.firstname,
