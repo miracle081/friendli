@@ -1,19 +1,23 @@
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { formatTimeAgo } from './formatTimeAgo';
 import { FontAwesome } from '@expo/vector-icons';
 import { errorMessage } from './formatErrorMessage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../Firebase/settigns';
 import { AppContext } from './globalVariables';
 import { Theme } from './Theme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { ToastApp } from './Toast';
+import { CommentModal } from './CommentModal';
 
 export function CardPost({ item }) {
     const { userUID, setPreloader, } = useContext(AppContext)
     const isOwner = item.userUID == userUID;
     const checkIfUserLiked = item?.heart?.includes(userUID);
+    const [visible, setVisible] = useState(false);
+
 
     function handleheart() {
         let updatedHearts = [];
@@ -39,7 +43,17 @@ export function CardPost({ item }) {
     function handleDelete() {
         Alert.alert("Delete Post!", "Are you sure you want to delete this post?",
             [{ text: "No, Cancel", style: "cancel" },
-            { text: "Yes", style: "destructive", onPress: () => { } }
+            {
+                text: "Yes", style: "destructive", onPress: () => {
+                    deleteDoc(doc(db, "posts", item.docID))
+                        .then(() => {
+                            ToastApp("Post deleted successfully", "LONG");
+                        })
+                        .catch(() => {
+                            ToastApp("Fial to deleted post", "LONG");
+                        })
+                }
+            }
             ]
         )
     }
@@ -55,9 +69,9 @@ export function CardPost({ item }) {
                         <Text style={{ fontFamily: Theme.fonts.text600, color: Theme.colors.gray, fontSize: 13 }}>{formatTimeAgo(item?.timestamp)}</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={handleDelete}>
+                {isOwner && <TouchableOpacity onPress={handleDelete}>
                     <FontAwesomeIcon icon={faTrashAlt} color={Theme.colors.red} />
-                </TouchableOpacity>
+                </TouchableOpacity>}
             </View>
 
             <Text style={styles.postText}>{item.caption}</Text>
@@ -67,12 +81,12 @@ export function CardPost({ item }) {
             <View style={styles.actionRow}>
                 <TouchableOpacity onPress={handleheart} style={styles.actionButton}>
                     <FontAwesome name={checkIfUserLiked ? "heart" : "heart-o"} size={20} color={checkIfUserLiked ? Theme.colors.red : "gray"} />
-                    <Text style={styles.actionText}>{item?.heart?.length}</Text>
+                    {item?.heart?.length > 0 ? <Text style={styles.actionText}>{item?.heart?.length}</Text> : null}
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionButton}>
+                <TouchableOpacity onPress={() => setVisible(true)} style={styles.actionButton}>
                     <FontAwesome name="comment-o" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.comments}</Text>
+                    {item?.comments?.length > 0 ? <Text style={styles.actionText}>{item?.comments?.length}</Text> : null}
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
@@ -80,6 +94,13 @@ export function CardPost({ item }) {
                     <Text style={styles.actionText}>{item.shares}</Text>
                 </TouchableOpacity>
             </View>
+
+            <CommentModal
+                visible={visible}
+                comments={item.comments}
+                onClose={() => setVisible(false)}
+                postID={item.docID}
+            />
         </View>
     )
 }
