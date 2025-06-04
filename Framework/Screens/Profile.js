@@ -9,61 +9,9 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../Firebase/settigns";
 import { ToastApp } from "../Components/Toast";
 import { errorMessage } from "../Components/formatErrorMessage";
+import { CardPost } from "../Components/CardPost";
 
-const RenderPost = ({ item, userUID }) => {
-    const checkIfUserLiked = item.heart.includes(userUID);
 
-    const handleheart = async () => {
-        const updatedHearts = checkIfUserLiked ? item.heart.filter(uid => uid !== userUID) : [...item.heart, userUID];
-        try {
-            await updateDoc(doc(db, "posts", item.docID), { heart: updatedHearts });
-        } catch (error) {
-            console.error("Error updating post: ", error);
-            ToastApp(errorMessage(error.code), "LONG");
-        }
-    };
-
-    return (
-        <View style={styles.postContainer}>
-            <View style={styles.postHeader}>
-                <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
-                <View style={styles.userInfo}>
-                    <Text style={styles.userName}>
-                        {item?.userInfo?.firstname} {item?.userInfo?.lastname}
-                    </Text>
-                    <Text style={styles.userBio}>{item?.userInfo?.bio}</Text>
-                </View>
-            </View>
-
-            <Text style={styles.postText}>{item.caption}</Text>
-
-            {item.media[0] && (
-                <Image source={{ uri: item.media[0] }} style={styles.postImage} />
-            )}
-
-            <View style={styles.actionRow}>
-                <TouchableOpacity onPress={handleheart} style={styles.actionButton}>
-                    <FontAwesome
-                        name={checkIfUserLiked ? "heart" : "heart-o"}
-                        size={20}
-                        color={checkIfUserLiked ? Theme.colors.red : "gray"}
-                    />
-                    <Text style={styles.actionText}>{item.heart.length}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <FontAwesome name="comment-o" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.comments}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionButton}>
-                    <FontAwesome name="share" size={20} color="black" />
-                    <Text style={styles.actionText}>{item.shares}</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
 
 export function Profile({ navigation }) {
     const { userInfo, posts, userUID } = useContext(AppContext);
@@ -137,7 +85,7 @@ export function Profile({ navigation }) {
 
                 {/* Posts */}
                 {userPosts.map((post, index) => (
-                    <RenderPost key={index} item={post} userUID={userUID} />
+                    <CardPost key={index} item={post} />
                 ))}
             </ScrollView>
         </View>
@@ -272,63 +220,5 @@ const styles = StyleSheet.create({
         width: 1,
         backgroundColor: Theme.colors.light.line,
     },
-    // Post styles
-    postContainer: {
-        backgroundColor: Theme.colors.light.bg,
-        marginHorizontal: 10,
-        marginVertical: 6,
-        padding: 16,
-        borderRadius: 10,
-    },
-    postHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
-    userInfo: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    userName: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: Theme.colors.light.text1,
-    },
-    userBio: {
-        fontSize: 12,
-        color: Theme.colors.light.text2,
-    },
-    postText: {
-        marginVertical: 12,
-        fontSize: 14,
-        color: Theme.colors.light.text1,
-        lineHeight: 20,
-    },
-    postImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10,
-        marginBottom: 8,
-    },
-    actionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 8,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: Theme.colors.light.line,
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    actionText: {
-        marginLeft: 5,
-        fontSize: 14,
-        color: Theme.colors.light.text2,
-    },
+
 });

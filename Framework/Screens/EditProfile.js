@@ -48,7 +48,7 @@ export function EditProfile({ navigation }) {
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
-            uploadImageToFirestore();
+            uploadImageToFirestore(result.assets[0].uri);
         }
     }
 
@@ -62,7 +62,7 @@ export function EditProfile({ navigation }) {
         return await getDownloadURL(imageRef);
     }
 
-    async function uploadImageToFirestore() {
+    async function uploadImageToFirestore(image) {
         setPreloader(true);
         try {
             const uploadedUrl = await uploadImageToStorage(image);

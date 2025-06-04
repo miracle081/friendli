@@ -13,6 +13,7 @@ import { db } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { ToastApp } from '../Components/Toast';
 import { formatTimeAgo } from '../Components/formatTimeAgo';
+import { CardPost } from '../Components/CardPost';
 
 
 
@@ -57,7 +58,7 @@ const Home = ({ navigation }) => {
                     allposts.push({ ...item.data(), docID: item.id });
                 });
                 setPreloader(false);
-                setPosts(allposts);
+                setPosts(allposts.sort((a, b) => b.timestamp - a.timestamp));
             }, (error) => {
                 setPreloader(false);
                 console.error("Error fetching posts: ", error);
@@ -76,62 +77,7 @@ const Home = ({ navigation }) => {
     );
 
     const renderPost = ({ item }) => {
-        const checkIfUserLiked = item.heart.includes(userUID);
 
-        function handleheart() {
-            let updatedHearts = [];
-            if (checkIfUserLiked) {
-                // Remove like
-                updatedHearts = item.heart.filter(uid => uid !== userUID);
-            } else {
-                // Add like
-                updatedHearts = [...item.heart, userUID];
-            }
-            updateDoc(doc(db, "posts", item.docID), {
-                heart: updatedHearts
-            })
-                .then(() => {
-                    // console.log("Post updated successfully");
-                })
-                .catch((error) => {
-                    console.error("Error updating post: ", error);
-                    ToastApp(errorMessage(error.code), "LONG");
-                })
-        }
-
-        return (
-            <View style={styles.postContainer}>
-                <View style={styles.postHeader}>
-                    <Image source={{ uri: item?.userInfo?.image }} style={styles.profilePic} />
-                    <View style={{ marginLeft: 10 }}>
-                        <Text style={styles.profileName}>{item?.userInfo?.firstname} {item?.userInfo?.lastname}</Text>
-                        {item?.userInfo?.bio && <Text style={styles.profileDetails} numberOfLines={1}>{item?.userInfo?.bio}</Text>}
-                        <Text style={{ fontFamily: Theme.fonts.text600, color: Theme.colors.gray, fontSize: 13 }}>{formatTimeAgo(item.timestamp)}</Text>
-                    </View>
-                </View>
-
-                <Text style={styles.postText}>{item.caption}</Text>
-
-                {item.media[0] && <Image source={{ uri: item.media[0] }} style={styles.postImage} />}
-
-                <View style={styles.actionRow}>
-                    <TouchableOpacity onPress={handleheart} style={styles.actionButton}>
-                        <FontAwesome name={checkIfUserLiked ? "heart" : "heart-o"} size={20} color={checkIfUserLiked ? Theme.colors.red : "gray"} />
-                        <Text style={styles.actionText}>{item.heart.length}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.actionButton}>
-                        <FontAwesome name="comment-o" size={20} color="black" />
-                        <Text style={styles.actionText}>{item.comments}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.actionButton}>
-                        <FontAwesome name="share" size={20} color="black" />
-                        <Text style={styles.actionText}>{item.shares}</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        )
     };
 
     const carouselLinks = [
@@ -173,14 +119,14 @@ const Home = ({ navigation }) => {
                 </View> */}
 
                 <FlatList
-                    ListHeaderComponent={
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesContainer}>
-                            {storiesData.map(renderStory)}
-                        </ScrollView>
-                    }
+                    // ListHeaderComponent={
+                    //     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesContainer}>
+                    //         {storiesData.map(renderStory)}
+                    //     </ScrollView>
+                    // }
                     data={posts}
                     keyExtractor={(item, index) => index.toString()}
-                    renderItem={renderPost}
+                    renderItem={({ item }) => <CardPost item={item} />}
                     contentContainerStyle={{ paddingBottom: 80 }}
                 />
 
@@ -221,8 +167,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         paddingVertical: 8,
         paddingHorizontal: 10
-
-
     },
     storyItem: {
         alignItems: 'center',
@@ -239,50 +183,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
         fontSize: 12
     },
-    postContainer: {
-        marginHorizontal: 10,
-        marginVertical: 6,
-        padding: 10,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10
-    },
-    postHeader: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25
-    },
-    profileName: {
-        fontWeight: 'bold'
-    },
-    profileDetails: {
-        fontSize: 12,
-        color: '#555'
-    },
-    postText: {
-        marginVertical: 8,
-        fontSize: 14
-    },
-    postImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10
-    },
-    actionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 8
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    actionText: {
-        marginLeft: 5
-    }
+
 });
 
 // export default HomeScreen;

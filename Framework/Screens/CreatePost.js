@@ -55,16 +55,17 @@ export function CreatePost({ navigation }) {
         setPreloader(true);
 
         try {
-            let uploadedMedia = [];
+            // let uploadedMedia = [];
 
-            if (media.length > 0) {
-                const uploadedUrl = await uploadImageToFirebase(media[0]);
-                uploadedMedia = [uploadedUrl];
-            }
+            // if (media.length > 0) {
+            //     const uploadedUrl = await uploadImageToFirebase(media[0]);
+            //     uploadedMedia = [uploadedUrl];
+            // }
 
             await addDoc(collection(db, "posts"), {
                 caption: caption,
-                media: uploadedMedia,
+                // media: uploadedMedia,
+                media,
                 userUID: userUID,
                 userInfo: {
                     firstname: userInfo.firstname,
@@ -104,7 +105,7 @@ export function CreatePost({ navigation }) {
                 <View style={styles.userInfoContainer}>
                     <Image source={{ uri: userInfo?.image }} style={styles.userAvatar} />
                     <View style={styles.userNamePrivacyContainer}>
-                        <Text style={styles.userName}>{userInfo.firstname} {userInfo.lastname}</Text>
+                        <Text style={styles.userName}>{userInfo?.firstname} {userInfo?.lastname}</Text>
                         <TouchableOpacity style={styles.privacySelector}>
                             <FontAwesomeIcon icon={faGlobe} size={14} color={Theme.colors.gray} />
                             <Text style={styles.privacyText}>Public</Text>
