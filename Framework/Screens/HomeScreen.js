@@ -8,7 +8,7 @@ import { Profile } from './Profile';
 import { Theme } from '../Components/Theme';
 import { CreatePost } from './CreatePost';
 import { AppContext } from '../Components/globalVariables';
-import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../Firebase/settigns';
 import { errorMessage } from '../Components/formatErrorMessage';
 import { ToastApp } from '../Components/Toast';
@@ -25,8 +25,38 @@ const storiesData = [
     { name: 'Marketplace', image: 'https://cdn-icons-png.flaticon.com/512/9198/9198446.png' }
 ];
 const Home = ({ navigation }) => {
-    const { userUID, userInfo, setPreloader, setUserInfo, posts, setPosts } = useContext(AppContext)
+    const { userUID, userInfo, setPreloader, setUserInfo, posts, setPosts, transactions, setTransactions } = useContext(AppContext)
     const { width, height } = Dimensions.get("window");
+
+
+    function fetchPosts() {
+        setPreloader(true);
+        onSnapshot(collection(db, "posts"), (snapshot) => {
+            const allposts = [];
+            snapshot.forEach(item => {
+                allposts.push({ ...item.data(), docID: item.id });
+            });
+            setPreloader(false);
+            setPosts(allposts.sort((a, b) => b.timestamp - a.timestamp));
+        }, (error) => {
+            setPreloader(false);
+            console.error("Error fetching posts: ", error);
+            Alert.alert("Error", errorMessage(error.code));
+        });
+    }
+
+    function fetchTransactions() {
+        const q = query(collection(db, "history"), where("user", "==", userUID));
+        onSnapshot(q, (snapshot) => {
+            const allposts = [];
+            snapshot.forEach(item => {
+                allposts.push({ ...item.data(), docID: item.id });
+            });
+            console.log(allposts);
+
+            setTransactions(allposts.sort((a, b) => b.timestamp - a.timestamp));
+        });
+    }
 
     useEffect(() => {
         // function getuser() {
@@ -50,23 +80,9 @@ const Home = ({ navigation }) => {
         }
         getuser();
 
-        function fetchPosts() {
-            setPreloader(true);
-            onSnapshot(collection(db, "posts"), (snapshot) => {
-                const allposts = [];
-                snapshot.forEach(item => {
-                    allposts.push({ ...item.data(), docID: item.id });
-                });
-                setPreloader(false);
-                setPosts(allposts.sort((a, b) => b.timestamp - a.timestamp));
-            }, (error) => {
-                setPreloader(false);
-                console.error("Error fetching posts: ", error);
-                Alert.alert("Error", errorMessage(error.code));
-            });
-        }
 
         fetchPosts()
+        fetchTransactions();
     }, [])
 
     const renderStory = (item, index) => (

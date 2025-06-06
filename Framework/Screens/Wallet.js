@@ -10,52 +10,12 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { formatMoney } from '../Components/FormatMoney';
 import { AppContext } from '../Components/globalVariables';
+import { Theme } from '../Components/Theme';
+import { dateTime } from '../Components/DateTime';
 
 export const Wallet = ({ navigation }) => {
-    const { userUID, setPreloader, userInfo } = useContext(AppContext);
+    const { userUID, setPreloader, userInfo, transactions } = useContext(AppContext);
     const [showBalance, setShowBalance] = useState(true);
-    const transactions = [
-        {
-            id: 1,
-            title: 'Coffee Shop',
-            amount: -400.50,
-            date: 'Today',
-            icon: 'coffee',
-            type: 'expense'
-        },
-        {
-            id: 2,
-            title: 'Salary',
-            amount: 350000.00,
-            date: 'Yesterday',
-            icon: 'money',
-            type: 'income'
-        },
-        {
-            id: 3,
-            title: 'Shopping',
-            amount: -8900.99,
-            date: 'May 27',
-            icon: 'shopping-bag',
-            type: 'expense'
-        },
-        {
-            id: 4,
-            title: 'Gas Station',
-            amount: -4500.00,
-            date: 'May 26',
-            icon: 'car',
-            type: 'expense'
-        },
-        {
-            id: 5,
-            title: 'Rent',
-            amount: -120000.00,
-            date: 'May 24',
-            icon: 'home',
-            type: 'expense'
-        }
-    ];
 
     const balance = userInfo.balance;
 
@@ -99,25 +59,25 @@ export const Wallet = ({ navigation }) => {
                     <Text style={styles.sectionTitle}>Recent Transactions</Text>
 
                     {transactions.map((item) => (
-                        <View key={item.id} style={styles.transactionItem}>
+                        <View key={item.docID} style={styles.transactionItem}>
                             <View style={styles.iconContainer}>
                                 <FontAwesome
-                                    name={item.icon}
+                                    name={"money"}
                                     size={20}
-                                    color={item.type === 'income' ? '#4CAF50' : '#FF5722'}
+                                    color={Theme.colors.primary}
                                 />
                             </View>
 
                             <View style={styles.transactionInfo}>
                                 <Text style={styles.transactionTitle}>{item.title}</Text>
-                                <Text style={styles.transactionDate}>{item.date}</Text>
+                                <Text style={styles.transactionDate}>{dateTime(item.timestamp)}</Text>
                             </View>
 
                             <Text style={[
                                 styles.transactionAmount,
-                                { color: item.type === 'income' ? '#4CAF50' : '#FF5722' }
+                                { color: item.type === 'credit' ? '#4CAF50' : '#FF5722' }
                             ]}>
-                                {item.amount > 0 ? '+' : ''}₦{formatMoney(Math.abs(item.amount))}
+                                {item.type === 'credit' ? '+' : ''}₦{formatMoney(Math.abs(item.amount))}
                             </Text>
                         </View>
                     ))}

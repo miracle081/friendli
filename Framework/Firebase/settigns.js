@@ -11,6 +11,8 @@ const firebaseConfig = {
     storageBucket: "friendli-9d2ff.firebasestorage.app",
     messagingSenderId: "494450733705",
     appId: "1:494450733705:web:13c3660cb59d5a4237cc58"
+
+    ////========== DataBase Note: With free storage ==========////
     // apiKey: "AIzaSyC-fwUy9KmKs4l3vOMMOtMWvMs6LBmrYz4",
     // authDomain: "note-b7625.firebaseapp.com",
     // projectId: "note-b7625",

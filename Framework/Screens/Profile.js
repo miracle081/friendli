@@ -1,9 +1,9 @@
 import { useContext } from "react";
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Platform, StatusBar } from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Platform, StatusBar, Alert } from "react-native";
 import { AppContext } from "../Components/globalVariables";
 import { Theme } from "../Components/Theme";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faPencilAlt, faImage, faMapMarkerAlt, faWallet } from "@fortawesome/free-solid-svg-icons";
+import { faPencilAlt, faImage, faMapMarkerAlt, faWallet, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../Firebase/settigns";
@@ -22,6 +22,13 @@ export function Profile({ navigation }) {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Cover Photo */}
                 <View style={styles.coverPhoto} />
+                {/* log out icon */}
+                <TouchableOpacity onPress={() => Alert.alert("Log Out", "Are you sure you want to log out?", [{ text: "Cancel", style: "cancel" }, { text: "Log Out", style: "destructive", onPress: () => navigation.navigate("Login"), }])} style={{ position: 'absolute', top: 50, right: 20, backgroundColor: Theme.colors.red, borderRadius: 50, padding: 10, }}>
+                    <FontAwesomeIcon
+                        icon={faSignOutAlt}
+                        size={24}
+                        color={"white"} />
+                </TouchableOpacity>
 
                 {/* Profile Info */}
                 <View style={styles.profileSection}>
@@ -63,20 +70,20 @@ export function Profile({ navigation }) {
                             source={{ uri: userInfo?.image || 'https://placehold.co/40/22C55E/FFFFFF/png' }}
                             style={styles.postUserImage}
                         />
-                        <TouchableOpacity style={styles.postInput}>
+                        <TouchableOpacity onPress={() => navigation.navigate("CreatePost")} style={styles.postInput}>
                             <Text style={styles.postInputText}>What's on your mind?</Text>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.postOptions}>
-                        <TouchableOpacity style={styles.postOption}>
+                        <TouchableOpacity onPress={() => navigation.navigate("CreatePost")} style={styles.postOption}>
                             <FontAwesomeIcon icon={faImage} size={18} color={Theme.colors.green} />
                             <Text style={styles.postOptionText}>Photo</Text>
                         </TouchableOpacity>
 
                         <View style={styles.optionDivider} />
 
-                        <TouchableOpacity style={styles.postOption}>
+                        <TouchableOpacity onPress={() => navigation.navigate("CreatePost")} style={styles.postOption}>
                             <FontAwesomeIcon icon={faMapMarkerAlt} size={18} color={Theme.colors.red} />
                             <Text style={styles.postOptionText}>Check in</Text>
                         </TouchableOpacity>

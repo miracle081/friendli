@@ -34,6 +34,8 @@ export function Pay({ navigation, route }) {
                                 user: userUID,
                                 amount,
                                 status: "success",
+                                type: "credit",
+                                title: "Wallet Top Up",
                                 transactionRef: data.transactionRef,
                                 timestamp: Date.now()
                             })
